@@ -11,6 +11,7 @@ all:$(BUILD)/helpers/buffer.o \
 	$(BUILD)/helpers/vector.o \
 	$(BUILD)/lexer.o \
 	$(BUILD)/process.o \
+	$(BUILD)/fsm.o \
 	$(BUILD)/javac.o
 	gcc -g -I$(INCLUDE) main.c $^ -o ./javac
 

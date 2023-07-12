@@ -1,4 +1,6 @@
 #include "lexer.h"
+#include "fsm.h"
+#include <ctype.h>
 
 lexer_process       *lex_process;
 
@@ -57,9 +59,50 @@ int lexer(lexer_process *process)
     printf("---Code Start---\n");
     do {
         c = process->next(lex_process);
-        if (c != EOF) 
-            printf("%c", c);
-    } while(c != EOF);
+        switch (c) {
+            case EOF:
+                exit(0);
+            case ' ':
+            case '\n':
+                break;
+            default: {
+                int i;
+                if (!isalpha(c) && !isdigit(c)) {
+                    // 判断是否为符号
+                    i = 0;
+                    while (true) {
+                        i = fsm_signal_symbol_next(i, c);
+                        if (i == -1) {
+                            printf("compile error!\n");
+                            exit(-1);
+                        } else if (i == TOKEN_TYPE_SYMBOL || i == TOKEN_TYPE_NEWLINE || i == TOKEN_TYPE_EXPEND)
+                            break;
+                        c = process->next(lex_process);
+                    }
+                    printf("%c<%d>\n", c, i);
+                } else if (isalpha(c) || c == '_' || c == '$') {
+                    // 判断是否为标识符
+                    i = 0;
+                    struct buffer *buf = buffer_create();
+                    while(true) {
+                        i = fsm_identifier_next(i, c);
+                        if (i == -1)
+                            break;
+                        else if (i == TOKEN_TYPE_IDENTIFIER) {
+                            process->push(lex_process, c);
+                            break;
+                        } else 
+                            buffer_write(buf, c);
+                        c = process->next(lex_process);
+                    }
+                    buffer_write(buf, 0);
+                    printf("%s<%d>\n", (char*)buffer_ptr(buf), i);
+                    buffer_free(buf);
+                }
+            }
+                break;
+        }
+    } while(true);
     printf("\n---Code End---\n");
     return JAVAC_LEXER_OK;
 }

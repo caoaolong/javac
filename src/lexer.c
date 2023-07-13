@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "token.h"
 #include "fsm.h"
 #include <ctype.h>
 
@@ -40,6 +41,7 @@ lexer_process *lexer_process_create(compile_process *compiler)
         return NULL;
     
     process->compiler = compiler;
+    process->tokens = vector_create(sizeof(token));
     process->next = lexer_next_char;
     process->peek = lexer_peek_char;
     process->push = lexer_push_char;
@@ -51,58 +53,49 @@ void lexer_process_free(lexer_process *process)
     free(process);
 }
 
+token *tokens()
+{
+    token *tk = NULL;
+    char c = lex_process->peek(lex_process);
+    switch (c) {
+        case EOF:
+            return NULL;
+        case ' ':
+        case '\t':
+        case '\n':
+            c = lex_process->next(lex_process);
+            return tokens();
+        default:
+            if (!isalpha(c) && !isdigit(c)) 
+                tk = token_make_symbol(lex_process);
+            else if (isalpha(c) || c == '_' || c == '$') 
+                tk = token_make_identifier_keyword(lex_process);
+            break;
+    }
+    return tk;
+}
+
 int lexer(lexer_process *process)
 {
     lex_process = process;
     process->pos.filename = process->compiler->ifile.path;
-    char c;
-    printf("---Code Start---\n");
+    token *tk;
     do {
-        c = process->next(lex_process);
-        switch (c) {
-            case EOF:
-                exit(0);
-            case ' ':
-            case '\n':
-                break;
-            default: {
-                int i;
-                if (!isalpha(c) && !isdigit(c)) {
-                    // 判断是否为符号
-                    i = 0;
-                    while (true) {
-                        i = fsm_signal_symbol_next(i, c);
-                        if (i == -1) {
-                            printf("compile error!\n");
-                            exit(-1);
-                        } else if (i == TOKEN_TYPE_SYMBOL || i == TOKEN_TYPE_NEWLINE || i == TOKEN_TYPE_EXPEND)
-                            break;
-                        c = process->next(lex_process);
-                    }
-                    printf("%c<%d>\n", c, i);
-                } else if (isalpha(c) || c == '_' || c == '$') {
-                    // 判断是否为标识符
-                    i = 0;
-                    struct buffer *buf = buffer_create();
-                    while(true) {
-                        i = fsm_identifier_next(i, c);
-                        if (i == -1)
-                            break;
-                        else if (i == TOKEN_TYPE_IDENTIFIER) {
-                            process->push(lex_process, c);
-                            break;
-                        } else 
-                            buffer_write(buf, c);
-                        c = process->next(lex_process);
-                    }
-                    buffer_write(buf, 0);
-                    printf("%s<%d>\n", (char*)buffer_ptr(buf), i);
-                    buffer_free(buf);
-                }
-            }
-                break;
+        tk = tokens();
+        if (tk) vector_push(lex_process->tokens, tk);
+    } while(tk);
+
+    size_t size = vector_count(process->tokens);
+    token *elem = (token*)vector_data_ptr(lex_process->tokens);
+    for (size_t i = 0; i < size; i++)
+    {
+        if (elem->type == TOKEN_TYPE_IDENTIFIER || elem->type == TOKEN_TYPE_KEYWORD) {
+            printf("token<value=%s,type=%#x>\n", (char *)elem->sval, elem->type);
+        } else if (elem->type == TOKEN_TYPE_SYMBOL) {
+            printf("token<value=%c,type=%d>\n", elem->cval, elem->type);
         }
-    } while(true);
-    printf("\n---Code End---\n");
+        elem += 1;
+    }
+    
     return JAVAC_LEXER_OK;
 }

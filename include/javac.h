@@ -3,6 +3,9 @@
 
 #include "helpers/buffer.h"
 #include "helpers/vector.h"
+#include <string.h>
+
+#define SEQ(s1, s2)     ((s1) && (s2) && !strcmp((s1), (s2)))
 
 enum {
     JAVAC_OK,

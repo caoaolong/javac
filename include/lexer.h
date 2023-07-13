@@ -2,12 +2,14 @@
 #define JAVAC_LEXER_H
 
 #include "process.h"
+#include "token.h"
 
 typedef struct lexer_process_t lexer_process;
 
 struct lexer_process_t {
     position pos;
     compile_process *compiler;
+    struct vector *tokens;
     char (*next)(lexer_process *process);
     char (*peek)(lexer_process *process);
     void (*push)(lexer_process *process, char c);

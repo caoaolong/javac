@@ -65,6 +65,9 @@ token *tokens()
         case '\n':
             c = lex_process->next(lex_process);
             return tokens();
+        case '"':
+            tk = token_make_string(lex_process);
+            break;
         default:
             if (!isalpha(c) && !isdigit(c)) 
                 tk = token_make_symbol(lex_process);
@@ -89,7 +92,9 @@ int lexer(lexer_process *process)
     token *elem = (token*)vector_data_ptr(lex_process->tokens);
     for (size_t i = 0; i < size; i++)
     {
-        if (elem->type == TOKEN_TYPE_IDENTIFIER || elem->type == TOKEN_TYPE_KEYWORD) {
+        if (elem->type == TOKEN_TYPE_IDENTIFIER 
+            || elem->type == TOKEN_TYPE_KEYWORD
+            || elem->type == TOKEN_TYPE_STRING) {
             printf("token<value=%s,type=%#x>\n", (char *)elem->sval, elem->type);
         } else if (elem->type == TOKEN_TYPE_SYMBOL) {
             printf("token<value=%c,type=%d>\n", elem->cval, elem->type);

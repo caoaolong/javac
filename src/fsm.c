@@ -4,6 +4,8 @@ static short signal_symbol[1][128];
 
 static short identifier[2][128];
 
+static short string[4][128];
+
 void fsm_signal_symbol_init()
 {
     for (int r = 0; r < 1; r++)
@@ -66,8 +68,11 @@ void fsm_identifier_init()
     identifier[1]['\t'] = TOKEN_TYPE_IDENTIFIER;
     identifier[1]['\n'] = TOKEN_TYPE_IDENTIFIER;
     identifier[1]['['] = TOKEN_TYPE_IDENTIFIER;
+    identifier[1][']'] = TOKEN_TYPE_IDENTIFIER;
     identifier[1]['{'] = TOKEN_TYPE_IDENTIFIER;
+    identifier[1]['}'] = TOKEN_TYPE_IDENTIFIER;
     identifier[1]['('] = TOKEN_TYPE_IDENTIFIER;
+    identifier[1][')'] = TOKEN_TYPE_IDENTIFIER;
     identifier[1][','] = TOKEN_TYPE_IDENTIFIER;
     identifier[1]['.'] = TOKEN_TYPE_IDENTIFIER;
     identifier[1][':'] = TOKEN_TYPE_IDENTIFIER;
@@ -87,4 +92,32 @@ void fsm_identifier_init()
 int fsm_identifier_next(int state, char c)
 {
     return identifier[state][c];
+}
+
+void fsm_string_init()
+{
+    for (int r = 0; r < 4; r++)
+        for (int c = 0; c < 128; c++)
+            string[r][c] = -1;
+    
+    string[0]['"'] = 1;
+
+    for (int c = 0; c < 128; c++)
+        string[1][c] = 1;
+    string[1]['"'] = 3;
+    string[1]['\\'] = 2;
+    for (int c = 0; c < 128; c++)
+        string[2][c] = 1;
+    string[3][' '] = TOKEN_TYPE_STRING;
+    string[3]['\t'] = TOKEN_TYPE_STRING;
+    string[3]['\n'] = TOKEN_TYPE_STRING;
+    string[3][';'] = TOKEN_TYPE_STRING;
+    string[3]['+'] = TOKEN_TYPE_STRING;
+    string[3][')'] = TOKEN_TYPE_STRING;
+    string[3]['.'] = TOKEN_TYPE_STRING;
+}
+
+int fsm_string_next(int state, char c)
+{
+    return string[state][c];
 }

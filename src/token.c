@@ -40,9 +40,13 @@ token *token_make_identifier_keyword(lexer_process *process)
     struct buffer *buf = buffer_create();
     while(true) {
         i = fsm_identifier_next(i, c);
-        if (i == -1 || i == TOKEN_TYPE_IDENTIFIER)
+        if (i == -1) {
+            buffer_free(buf);
+            return NULL;
+        } else if (i == TOKEN_TYPE_IDENTIFIER) {
+            process->push(process, c);
             break;
-        else 
+        } else 
             buffer_write(buf, c);
         c = process->next(process);
     }
@@ -70,4 +74,26 @@ token *token_make_symbol(lexer_process *process)
     }
     return token_create(process, &(token){
         .type = TOKEN_TYPE_SYMBOL, .cval = c});
+}
+
+token *token_make_string(lexer_process *process)
+{
+    int i = 0;
+    char c = process->next(process);
+    struct buffer *buf = buffer_create();
+    while (true) {
+        i = fsm_string_next(i, c);
+        if (i == -1) {
+            buffer_free(buf);
+            return NULL;
+        } else if (i == TOKEN_TYPE_STRING) {
+            process->push(process, c);
+            break;
+        } else
+            buffer_write(buf, c); 
+        c = process->next(process);
+    }
+    buffer_write(buf, 0);
+    return token_create(process, &(token){
+        .type = TOKEN_TYPE_STRING, .sval = buffer_ptr(buf)});
 }

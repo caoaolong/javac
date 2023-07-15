@@ -7,6 +7,7 @@
 #define TOKEN_TYPE_IDENTIFIER   0x104
 #define TOKEN_TYPE_KEYWORD      0x105
 #define TOKEN_TYPE_STRING       0x106
+#define TOKEN_TYPE_NUMBER       0x107
 
 void fsm_signal_symbol_init();
 int fsm_signal_symbol_next(int state, char c);
@@ -16,4 +17,7 @@ int fsm_identifier_next(int state, char c);
 
 void fsm_string_init();
 int fsm_string_next(int state, char c);
+
+void fsm_number_init();
+int fsm_number_next(int state, char c);
 #endif

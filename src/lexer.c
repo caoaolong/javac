@@ -60,13 +60,17 @@ token *tokens()
     switch (c) {
         case EOF:
             return NULL;
-        case ' ':
-        case '\t':
-        case '\n':
+        CASE_SPACE:
             c = lex_process->next(lex_process);
             return tokens();
+        CASE_NUMBER:
+            tk = token_make_string_number(lex_process, TOKEN_TYPE_NUMBER);
+            break;
+        // CASE_ADD_SUB:
+        //     // TODO: 处理+和-
+        //     break;
         case '"':
-            tk = token_make_string(lex_process);
+            tk = token_make_string_number(lex_process, TOKEN_TYPE_STRING);
             break;
         default:
             if (!isalpha(c) && !isdigit(c)) 
@@ -94,7 +98,8 @@ int lexer(lexer_process *process)
     {
         if (elem->type == TOKEN_TYPE_IDENTIFIER 
             || elem->type == TOKEN_TYPE_KEYWORD
-            || elem->type == TOKEN_TYPE_STRING) {
+            || elem->type == TOKEN_TYPE_STRING
+            || elem->type == TOKEN_TYPE_NUMBER) {
             printf("token<value=%s,type=%#x>\n", (char *)elem->sval, elem->type);
         } else if (elem->type == TOKEN_TYPE_SYMBOL) {
             printf("token<value=%c,type=%d>\n", elem->cval, elem->type);

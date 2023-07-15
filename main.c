@@ -17,4 +17,5 @@ void fsm_init()
     fsm_signal_symbol_init();
     fsm_identifier_init();
     fsm_string_init();
+    fsm_number_init();
 }

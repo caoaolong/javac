@@ -1,15 +1,26 @@
 #include "fsm.h"
 
-static short signal_symbol[1][128];
+#define STATE_SIZE              128
 
-static short identifier[2][128];
+#define SIGNAL_SYMBOL_STATES    1
+static short signal_symbol[SIGNAL_SYMBOL_STATES][STATE_SIZE];
 
-static short string[4][128];
+#define IDENTIFIER_STATES       2
+static short identifier[IDENTIFIER_STATES][STATE_SIZE];
+
+#define STRING_STATES           4
+static short string[STRING_STATES][STATE_SIZE];
+
+#define NUMBER_STATES           15
+static short number[NUMBER_STATES][STATE_SIZE];
+
+#define OPERATOR_STATES         13
+static short operator[OPERATOR_STATES][STATE_SIZE];
 
 void fsm_signal_symbol_init()
 {
-    for (int r = 0; r < 1; r++)
-        for (int c = 0; c < 128; c++)
+    for (int r = 0; r < SIGNAL_SYMBOL_STATES; r++)
+        for (int c = 0; c < STATE_SIZE; c++)
         signal_symbol[r][c] = -1;
 
     signal_symbol[0][' '] = TOKEN_TYPE_SYMBOL;
@@ -47,8 +58,8 @@ int fsm_signal_symbol_next(int state, char c)
 
 void fsm_identifier_init()
 {
-    for (int r = 0; r < 3; r++)
-        for (int c = 0; c < 128; c++)
+    for (int r = 0; r < IDENTIFIER_STATES; r++)
+        for (int c = 0; c < STATE_SIZE; c++)
             identifier[r][c] = -1;
     
     for (char c = 'A'; c <= 'Z'; c++) {
@@ -96,12 +107,10 @@ int fsm_identifier_next(int state, char c)
 
 void fsm_string_init()
 {
-    for (int r = 0; r < 4; r++)
-        for (int c = 0; c < 128; c++)
+    for (int r = 0; r < STRING_STATES; r++)
+        for (int c = 0; c < STATE_SIZE; c++)
             string[r][c] = -1;
-    
     string[0]['"'] = 1;
-
     for (int c = 0; c < 128; c++)
         string[1][c] = 1;
     string[1]['"'] = 3;
@@ -120,4 +129,62 @@ void fsm_string_init()
 int fsm_string_next(int state, char c)
 {
     return string[state][c];
+}
+
+void fsm_number_init()
+{
+    for (int r = 0; r < NUMBER_STATES; r++)
+        for (int c = 0; c < STATE_SIZE; c++)
+            number[r][c] = -1;
+    
+    number[0]['-'] = number[0]['+'] = 1;
+    number[0]['0'] = 3;
+    for (int i = '1'; i <= '9'; i++) {
+        number[0][i] = 2;
+        number[15][i] = 15;
+    }
+    for (int i = '0'; i <= '9'; i++) {
+        number[1][i] = number[2][i] = number[3][i] = 2;
+        number[10][i] = number[12][i] = 12;
+        number[11][i] = number[13][i] = 13;
+    }
+    number[2]['.'] = 10;
+    number[2]['e'] = number[2]['E'] = 11;
+    number[12]['e'] = number[12]['E'] = 15;
+    number[13]['l'] = number[13]['L'] = 14;
+    number[12]['f'] = number[12]['F'] = number[15]['f'] = number[15]['F'] = 14;
+    number[3]['b'] = 4;
+    number[4]['0'] = number[4]['1'] = 7;
+    number[7]['0'] = number[7]['1'] = 7;
+    number[3]['o'] = 5;
+    for (int i = '0'; i <= '7'; i++)
+        number[5][i] = number[8][i] = 8;
+    number[3]['x'] = 6;
+    for (int i = '0'; i <= '9'; i++)
+        number[6][i] = number[9][i] = 9;
+    for (int i = 'a'; i <= 'f'; i++)
+        number[6][i] = number[9][i] = 9;
+    for (int i = 'A'; i <= 'F'; i++)
+        number[6][i] = number[9][i] = 9;
+    
+    // SYMBOL: + - * / % | & ? ] ) \b \n \t
+    number[13]['+'] = number[2]['+'] = number[15]['+'] = number[14]['+'] = number[7]['+'] = number[8]['+'] = number[9]['+'] = TOKEN_TYPE_NUMBER;
+    number[13]['-'] = number[2]['-'] = number[15]['-'] = number[14]['-'] = number[7]['-'] = number[8]['-'] = number[9]['-'] = TOKEN_TYPE_NUMBER;
+    number[13]['*'] = number[2]['*'] = number[15]['*'] = number[14]['*'] = number[7]['*'] = number[8]['*'] = number[9]['*'] = TOKEN_TYPE_NUMBER;
+    number[13]['/'] = number[2]['/'] = number[15]['/'] = number[14]['/'] = number[7]['/'] = number[8]['/'] = number[9]['/'] = TOKEN_TYPE_NUMBER;
+    number[13]['&'] = number[2]['&'] = number[15]['&'] = number[14]['&'] = number[7]['&'] = number[8]['&'] = number[9]['&'] = TOKEN_TYPE_NUMBER;
+    number[13]['|'] = number[2]['|'] = number[15]['|'] = number[14]['|'] = number[7]['|'] = number[8]['|'] = number[9]['|'] = TOKEN_TYPE_NUMBER;
+    number[13]['%'] = number[2]['%'] = number[15]['%'] = number[14]['%'] = number[7]['%'] = number[8]['%'] = number[9]['%'] = TOKEN_TYPE_NUMBER;
+    number[13][']'] = number[2][']'] = number[15][']'] = number[14][']'] = number[7][']'] = number[8][']'] = number[9][']'] = TOKEN_TYPE_NUMBER;
+    number[13][')'] = number[2][')'] = number[15][')'] = number[14][')'] = number[7][')'] = number[8][')'] = number[9][')'] = TOKEN_TYPE_NUMBER;
+    number[13][';'] = number[2][';'] = number[15][';'] = number[14][';'] = number[7][';'] = number[8][';'] = number[9][';'] = TOKEN_TYPE_NUMBER;
+    number[13][' '] = number[2][' '] = number[15][' '] = number[14][' '] = number[7][' '] = number[8][' '] = number[9][' '] = TOKEN_TYPE_NUMBER;
+    number[13]['?'] = number[2]['?'] = number[15]['?'] = number[14]['?'] = number[7]['?'] = number[8]['?'] = number[9]['?'] = TOKEN_TYPE_NUMBER;
+    number[13]['\t'] = number[2]['\t'] = number[15]['\t'] = number[14]['\t'] = number[7]['\t'] = number[8]['\t'] = number[9]['\t'] = TOKEN_TYPE_NUMBER;
+    number[13]['\n'] = number[2]['\n'] = number[15]['\n'] = number[14]['\n'] = number[7]['\n'] = number[8]['\n'] = number[9]['\n'] = TOKEN_TYPE_NUMBER;
+}
+
+int fsm_number_next(int state, char c)
+{
+    return number[state][c];
 }

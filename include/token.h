@@ -19,6 +19,6 @@ typedef struct {
 
 token *token_make_identifier_keyword(lexer_process *process);
 token *token_make_symbol(lexer_process *process);
-token *token_make_string(lexer_process *process);
+token *token_make_string_number(lexer_process *process, int type);
 
 #endif

@@ -76,17 +76,26 @@ token *token_make_symbol(lexer_process *process)
         .type = TOKEN_TYPE_SYMBOL, .cval = c});
 }
 
-token *token_make_string(lexer_process *process)
+token *token_make_string_number(lexer_process *process, int type)
 {
     int i = 0;
     char c = process->next(process);
     struct buffer *buf = buffer_create();
     while (true) {
-        i = fsm_string_next(i, c);
+        switch(type) {
+            case TOKEN_TYPE_STRING:
+                i = fsm_string_next(i, c);
+                break;
+            case TOKEN_TYPE_NUMBER:
+                i = fsm_number_next(i, c);
+                break;
+            default:
+                return NULL;
+        }
         if (i == -1) {
             buffer_free(buf);
             return NULL;
-        } else if (i == TOKEN_TYPE_STRING) {
+        } else if (i == TOKEN_TYPE_STRING || i == TOKEN_TYPE_NUMBER) {
             process->push(process, c);
             break;
         } else
@@ -95,5 +104,5 @@ token *token_make_string(lexer_process *process)
     }
     buffer_write(buf, 0);
     return token_create(process, &(token){
-        .type = TOKEN_TYPE_STRING, .sval = buffer_ptr(buf)});
+        .type = type, .sval = buffer_ptr(buf)});
 }

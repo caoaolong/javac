@@ -2,6 +2,7 @@
 #include "token.h"
 
 #define STATE_SIZE              128
+#define UNICODE_SIZE            163839
 
 #define SIGNAL_SYMBOL_STATES    1
 static short signal_symbol[SIGNAL_SYMBOL_STATES][STATE_SIZE];
@@ -19,7 +20,7 @@ static short number[NUMBER_STATES][STATE_SIZE];
 static short operator[OPERATOR_STATES][STATE_SIZE];
 
 #define QUOTE_STATES            3
-static short quote[QUOTE_STATES][STATE_SIZE];
+static short quote[QUOTE_STATES][UNICODE_SIZE];
 
 #define COMMENT_STATES          6
 static short comment[COMMENT_STATES][STATE_SIZE];
@@ -262,10 +263,10 @@ int fsm_operator_next(int state, char c)
 void fsm_quote_init()
 {
     for (int r = 0; r < QUOTE_STATES; r++)
-        for (int c = 0; c < STATE_SIZE; c++)
+        for (int c = 0; c < UNICODE_SIZE; c++)
             quote[r][c] = -1;
     quote[0]['\''] = 1;
-    for (int r = 0; r < STATE_SIZE; r++)
+    for (int r = 0; r < UNICODE_SIZE; r++)
         quote[1][r] = 1;
     quote[1]['\''] = TOKEN_TYPE_CHAR;
     quote[1]['\\'] = 2;
@@ -274,7 +275,7 @@ void fsm_quote_init()
     quote[2]['\"'] = 1;
 }
 
-int fsm_quote_next(int state, char c)
+int fsm_quote_next(int state, unsigned char c)
 {
     return quote[state][c];
 }

@@ -132,6 +132,28 @@ token *token_make_operator(lexer_process *process)
         .type = TOKEN_TYPE_OPERATOR, .sval = buffer_ptr(buf)});
 }
 
+token *token_make_character(lexer_process *process)
+{
+    int i = 0;
+    unsigned char c = process->next(process);
+    struct buffer *buf = buffer_create();
+    while (true) {
+        i = fsm_quote_next(i, c);
+        if (i == -1) {
+            buffer_free(buf);
+            return NULL;
+        } else if (i == TOKEN_TYPE_CHAR) {
+            buffer_write(buf, c);
+            break;
+        } else
+            buffer_write(buf, c); 
+        c = process->next(process);
+    }
+    buffer_write(buf, 0);
+    return token_create(process, &(token){
+        .type = TOKEN_TYPE_CHAR, .sval = buffer_ptr(buf)});
+}
+
 token *handle_comment(lexer_process *process)
 {
     return token_make_string_number(process, TOKEN_TYPE_COMMENT);

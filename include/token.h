@@ -34,6 +34,7 @@ token *token_make_identifier_keyword(lexer_process *process);
 token *token_make_symbol(lexer_process *process);
 token *token_make_string_number(lexer_process *process, int type);
 token *token_make_operator(lexer_process *process);
+token *token_make_character(lexer_process *process);
 
 token *handle_comment(lexer_process *process);
 

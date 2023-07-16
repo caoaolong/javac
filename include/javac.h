@@ -45,6 +45,9 @@
 #define CASE_STRING     \
         case '"'
 
+#define CASE_QUOTE      \
+        case '\''
+
 enum {
     JAVAC_OK,
     JAVAC_ERROR,

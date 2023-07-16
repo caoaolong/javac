@@ -15,7 +15,7 @@ static short string[STRING_STATES][STATE_SIZE];
 #define NUMBER_STATES           16
 static short number[NUMBER_STATES][STATE_SIZE];
 
-#define OPERATOR_STATES         15
+#define OPERATOR_STATES         17
 static short operator[OPERATOR_STATES][STATE_SIZE];
 
 void fsm_signal_symbol_init()
@@ -99,6 +99,7 @@ void fsm_identifier_init()
     identifier[1]['%'] = TOKEN_TYPE_IDENTIFIER;
     identifier[1]['|'] = TOKEN_TYPE_IDENTIFIER;
     identifier[1]['&'] = TOKEN_TYPE_IDENTIFIER;
+    identifier[1][';'] = TOKEN_TYPE_IDENTIFIER;
 }
 
 int fsm_identifier_next(int state, char c)
@@ -199,9 +200,11 @@ void fsm_operator_init()
     operator[0]['*'] = operator[0]['/'] = operator[0]['%'] = operator[0]['!'] = operator[0]['^'] = 1;
     operator[1]['='] = 14;
     operator[0]['+'] = 2;
-    operator[2]['+'] = operator[2]['='] = 14;
+    operator[2]['+'] = 15;
+    operator[2]['='] = 14;
     operator[0]['-'] = 3;
-    operator[3]['+'] = operator[3]['='] = 14;
+    operator[3]['-'] = 16;
+    operator[3]['='] = 14;
     operator[0]['|'] = 4;
     operator[4]['|'] = operator[4]['='] = 14;
     operator[0]['&'] = 5;
@@ -227,17 +230,22 @@ void fsm_operator_init()
     for (int i = 'a'; i <= 'z'; i++) {
         operator[1][i] = TOKEN_TYPE_OPERATOR;
         operator[14][i] = TOKEN_TYPE_OPERATOR;
+        operator[15][i] = operator[16][i] = TOKEN_TYPE_OPERATOR;
     }
     for (int i = 'A'; i <= 'Z'; i++) {
         operator[1][i] = TOKEN_TYPE_OPERATOR;
         operator[14][i] = TOKEN_TYPE_OPERATOR;
+        operator[15][i] = operator[16][i] = TOKEN_TYPE_OPERATOR;
     }
     for (int i = 1; i < OPERATOR_STATES; i++)
         operator[i]['_'] = operator[i][' '] = operator[i]['\t'] = 
-        operator[i]['\n'] = operator[i][';'] = operator[i][')'] = 
-        operator[i]['='] = operator[i]['<'] = operator[i]['>'] = 
-        operator[i]['!'] = operator[i]['|'] = operator[i]['&'] = 
-        operator[i][']'] = TOKEN_TYPE_OPERATOR;
+        operator[i]['\n'] = operator[i][';'] = operator[i]['('] = TOKEN_TYPE_OPERATOR;
+    operator[15][']'] = operator[16][']'] = 
+    operator[15][';'] = operator[16][';'] = 
+    operator[15][' '] = operator[16]['\t'] = 
+    operator[15]['\n'] = operator[16]['+'] = 
+    operator[15]['-'] = operator[16]['*'] = operator[15]['|'] = operator[16]['&'] = 
+    operator[15]['/'] = operator[16]['%'] = TOKEN_TYPE_OPERATOR;
 }
 
 int fsm_operator_next(int state, char c)

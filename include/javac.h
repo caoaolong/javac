@@ -38,7 +38,12 @@
         case '&':       \
         case '>':       \
         case '<':       \
-        case '='
+        case '=':       \
+        case '+':       \
+        case '-'
+
+#define CASE_STRING     \
+        case '"'
 
 enum {
     JAVAC_OK,

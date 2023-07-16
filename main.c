@@ -19,4 +19,6 @@ void fsm_init()
     fsm_string_init();
     fsm_number_init();
     fsm_operator_init();
+    fsm_quote_init();
+    fsm_comment_init();
 }

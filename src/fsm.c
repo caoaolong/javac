@@ -18,6 +18,12 @@ static short number[NUMBER_STATES][STATE_SIZE];
 #define OPERATOR_STATES         17
 static short operator[OPERATOR_STATES][STATE_SIZE];
 
+#define QUOTE_STATES            3
+static short quote[QUOTE_STATES][STATE_SIZE];
+
+#define COMMENT_STATES          6
+static short comment[COMMENT_STATES][STATE_SIZE];
+
 void fsm_signal_symbol_init()
 {
     for (int r = 0; r < SIGNAL_SYMBOL_STATES; r++)
@@ -251,4 +257,50 @@ void fsm_operator_init()
 int fsm_operator_next(int state, char c)
 {
     return operator[state][c];
+}
+
+void fsm_quote_init()
+{
+    for (int r = 0; r < QUOTE_STATES; r++)
+        for (int c = 0; c < STATE_SIZE; c++)
+            quote[r][c] = -1;
+    quote[0]['\''] = 1;
+    for (int r = 0; r < STATE_SIZE; r++)
+        quote[1][r] = 1;
+    quote[1]['\''] = TOKEN_TYPE_CHAR;
+    quote[1]['\\'] = 2;
+    quote[2]['\''] = quote[2]['n'] = quote[2]['t'] = quote[2]['0'] = quote[2]['r'] =
+    quote[2]['\\'] = quote[2]['b'] = quote[2]['a'] = quote[2]['v'] = quote[2]['r'] = 
+    quote[2]['\"'] = 1;
+}
+
+int fsm_quote_next(int state, char c)
+{
+    return quote[state][c];
+}
+
+void fsm_comment_init()
+{
+    for (int r = 0; r < COMMENT_STATES; r++)
+        for (int c = 0; c < STATE_SIZE; c++)
+            comment[r][c] = -1;
+    comment[0]['/'] = 1;
+    comment[1]['/'] = 2;
+    for (int r = 0; r < STATE_SIZE; r++)
+        comment[2][r] = 2;
+    comment[2]['\n'] = TOKEN_TYPE_COMMENT;
+    comment[1]['*'] = 3;
+    for (int r = 0; r < STATE_SIZE; r++)
+        comment[3][r] = 3;
+    comment[3]['*'] = 4;
+    for (int r = 0; r < STATE_SIZE; r++)
+        comment[4][r] = 3;
+    comment[4]['/'] = 5;
+    for (int r = 0; r < STATE_SIZE; r++)
+        comment[5][r] = TOKEN_TYPE_COMMENT;
+}
+
+int fsm_comment_next(int state, char c)
+{
+    return comment[state][c];
 }

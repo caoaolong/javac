@@ -11,6 +11,8 @@
 #define TOKEN_TYPE_STRING       0x106
 #define TOKEN_TYPE_NUMBER       0x107
 #define TOKEN_TYPE_OPERATOR     0x108
+#define TOKEN_TYPE_CHAR         0x109
+#define TOKEN_TYPE_COMMENT      0x10A
 
 typedef struct lexer_process_t lexer_process;
 
@@ -32,5 +34,7 @@ token *token_make_identifier_keyword(lexer_process *process);
 token *token_make_symbol(lexer_process *process);
 token *token_make_string_number(lexer_process *process, int type);
 token *token_make_operator(lexer_process *process);
+
+token *handle_comment(lexer_process *process);
 
 #endif

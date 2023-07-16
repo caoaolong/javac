@@ -89,13 +89,16 @@ token *token_make_string_number(lexer_process *process, int type)
             case TOKEN_TYPE_NUMBER:
                 i = fsm_number_next(i, c);
                 break;
+            case TOKEN_TYPE_COMMENT:
+                i = fsm_comment_next(i, c);
+                break;
             default:
                 return NULL;
         }
         if (i == -1) {
             buffer_free(buf);
             return NULL;
-        } else if (i == TOKEN_TYPE_STRING || i == TOKEN_TYPE_NUMBER) {
+        } else if (i == TOKEN_TYPE_STRING || i == TOKEN_TYPE_NUMBER || i == TOKEN_TYPE_COMMENT) {
             process->push(process, c);
             break;
         } else
@@ -127,4 +130,9 @@ token *token_make_operator(lexer_process *process)
     buffer_write(buf, 0);
     return token_create(process, &(token){
         .type = TOKEN_TYPE_OPERATOR, .sval = buffer_ptr(buf)});
+}
+
+token *handle_comment(lexer_process *process)
+{
+    return token_make_string_number(process, TOKEN_TYPE_COMMENT);
 }

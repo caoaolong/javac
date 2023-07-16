@@ -57,6 +57,11 @@ token *tokens()
 {
     token *tk = NULL;
     char c = lex_process->peek(lex_process);
+    // 处理注释内容
+    if (c == '/') {
+        tk = handle_comment(lex_process);
+        return tk;
+    }
     switch (c) {
         case EOF:
             return NULL;
@@ -77,6 +82,8 @@ token *tokens()
                 tk = token_make_symbol(lex_process);
             else if (isalpha(c) || c == '_' || c == '$') 
                 tk = token_make_identifier_keyword(lex_process);
+            else
+                compile_error(lex_process, "语法错误\n");
             break;
     }
     return tk;
@@ -85,14 +92,14 @@ token *tokens()
 int lexer(lexer_process *process)
 {
     lex_process = process;
-    process->pos.filename = process->compiler->ifile.path;
+    lex_process->pos.filename = lex_process->compiler->ifile.path;
     token *tk;
     do {
         tk = tokens();
         if (tk) vector_push(lex_process->tokens, tk);
     } while(tk);
 
-    size_t size = vector_count(process->tokens);
+    size_t size = vector_count(lex_process->tokens);
     token *elem = (token*)vector_data_ptr(lex_process->tokens);
     for (size_t i = 0; i < size; i++)
     {

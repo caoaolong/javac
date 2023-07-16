@@ -25,4 +25,6 @@ typedef struct {
 compile_process* compile_process_create(const char *ifile, const char *ofile, int flags);
 void compile_process_free(compile_process *process);
 
+void compile_warning(compile_process *process, const char *fmt, ...);
+void compile_error(compile_process *process, const char *fmt, ...);
 #endif

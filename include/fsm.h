@@ -15,4 +15,10 @@ int fsm_number_next(int state, char c);
 
 void fsm_operator_init();
 int fsm_operator_next(int state, char c);
+
+void fsm_quote_init();
+int fsm_quote_next(int state, char c);
+
+void fsm_comment_init();
+int fsm_comment_next(int state, char c);
 #endif

@@ -4,6 +4,7 @@
 #include <ctype.h>
 
 lexer_process       *lex_process;
+char                 prefix;
 
 char lexer_next_char(lexer_process *process)
 {
@@ -66,9 +67,17 @@ token *tokens()
         CASE_NUMBER:
             tk = token_make_string_number(lex_process, TOKEN_TYPE_NUMBER);
             break;
-        // CASE_ADD_SUB:
-        //     // TODO: 处理+和-
-        //     break;
+        CASE_OPERATOR:
+            tk = token_make_operator(lex_process);
+            break;
+        CASE_ADD_SUB:
+            if (prefix == 0) {
+                prefix = lex_process->next(lex_process);
+                return tokens();
+            } else {
+                tk = token_make_operator(lex_process);
+                break;
+            }
         case '"':
             tk = token_make_string_number(lex_process, TOKEN_TYPE_STRING);
             break;
@@ -84,6 +93,7 @@ token *tokens()
 
 int lexer(lexer_process *process)
 {
+    prefix = 0;
     lex_process = process;
     process->pos.filename = process->compiler->ifile.path;
     token *tk;
@@ -99,7 +109,8 @@ int lexer(lexer_process *process)
         if (elem->type == TOKEN_TYPE_IDENTIFIER 
             || elem->type == TOKEN_TYPE_KEYWORD
             || elem->type == TOKEN_TYPE_STRING
-            || elem->type == TOKEN_TYPE_NUMBER) {
+            || elem->type == TOKEN_TYPE_NUMBER
+            || elem->type == TOKEN_TYPE_OPERATOR) {
             printf("token<value=%s,type=%#x>\n", (char *)elem->sval, elem->type);
         } else if (elem->type == TOKEN_TYPE_SYMBOL) {
             printf("token<value=%c,type=%d>\n", elem->cval, elem->type);

@@ -28,6 +28,18 @@
         case '+':       \
         case '-'
 
+#define CASE_OPERATOR   \
+        case '*':       \
+        case '/':       \
+        case '%':       \
+        case '!':       \
+        case '^':       \
+        case '|':       \
+        case '&':       \
+        case '>':       \
+        case '<':       \
+        case '='
+
 enum {
     JAVAC_OK,
     JAVAC_ERROR,

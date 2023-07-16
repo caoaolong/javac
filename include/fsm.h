@@ -1,14 +1,6 @@
 #ifndef JAVAC_FSM_H
 #define JAVAC_FSM_H
 
-#define TOKEN_TYPE_SYMBOL       0x101
-#define TOKEN_TYPE_NEWLINE      0x102
-#define TOKEN_TYPE_EXPEND       0x103
-#define TOKEN_TYPE_IDENTIFIER   0x104
-#define TOKEN_TYPE_KEYWORD      0x105
-#define TOKEN_TYPE_STRING       0x106
-#define TOKEN_TYPE_NUMBER       0x107
-
 void fsm_signal_symbol_init();
 int fsm_signal_symbol_next(int state, char c);
 
@@ -20,4 +12,7 @@ int fsm_string_next(int state, char c);
 
 void fsm_number_init();
 int fsm_number_next(int state, char c);
+
+void fsm_operator_init();
+int fsm_operator_next(int state, char c);
 #endif

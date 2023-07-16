@@ -18,4 +18,5 @@ void fsm_init()
     fsm_identifier_init();
     fsm_string_init();
     fsm_number_init();
+    fsm_operator_init();
 }

@@ -1,4 +1,5 @@
 #include "fsm.h"
+#include "token.h"
 
 #define STATE_SIZE              128
 
@@ -11,10 +12,10 @@ static short identifier[IDENTIFIER_STATES][STATE_SIZE];
 #define STRING_STATES           4
 static short string[STRING_STATES][STATE_SIZE];
 
-#define NUMBER_STATES           15
+#define NUMBER_STATES           16
 static short number[NUMBER_STATES][STATE_SIZE];
 
-#define OPERATOR_STATES         13
+#define OPERATOR_STATES         15
 static short operator[OPERATOR_STATES][STATE_SIZE];
 
 void fsm_signal_symbol_init()
@@ -187,4 +188,59 @@ void fsm_number_init()
 int fsm_number_next(int state, char c)
 {
     return number[state][c];
+}
+
+void fsm_operator_init()
+{
+    for (int r = 0; r < OPERATOR_STATES; r++)
+        for (int c = 0; c < STATE_SIZE; c++)
+            operator[r][c] = -1;
+
+    operator[0]['*'] = operator[0]['/'] = operator[0]['%'] = operator[0]['!'] = operator[0]['^'] = 1;
+    operator[1]['='] = 14;
+    operator[0]['+'] = 2;
+    operator[2]['+'] = operator[2]['='] = 14;
+    operator[0]['-'] = 3;
+    operator[3]['+'] = operator[3]['='] = 14;
+    operator[0]['|'] = 4;
+    operator[4]['|'] = operator[4]['='] = 14;
+    operator[0]['&'] = 5;
+    operator[5]['&'] = operator[5]['='] = 14;
+    
+    operator[0]['>'] = 6;
+    operator[6]['>'] = 8;
+    operator[6]['='] = 10;
+    operator[8]['='] = 10;
+
+    operator[0]['<'] = 7;
+    operator[7]['<'] = 9;
+    operator[7]['='] = 11;
+    operator[9]['='] = 11;
+
+    operator[0]['='] = 12;
+    operator[12]['='] = 13;
+
+    for (int i = '0'; i <= '9'; i++) {
+        for (int s = 1; s < OPERATOR_STATES; s++) 
+            operator[s][i] = TOKEN_TYPE_OPERATOR;
+    }
+    for (int i = 'a'; i <= 'z'; i++) {
+        operator[1][i] = TOKEN_TYPE_OPERATOR;
+        operator[14][i] = TOKEN_TYPE_OPERATOR;
+    }
+    for (int i = 'A'; i <= 'Z'; i++) {
+        operator[1][i] = TOKEN_TYPE_OPERATOR;
+        operator[14][i] = TOKEN_TYPE_OPERATOR;
+    }
+    for (int i = 1; i < OPERATOR_STATES; i++)
+        operator[i]['_'] = operator[i][' '] = operator[i]['\t'] = 
+        operator[i]['\n'] = operator[i][';'] = operator[i][')'] = 
+        operator[i]['='] = operator[i]['<'] = operator[i]['>'] = 
+        operator[i]['!'] = operator[i]['|'] = operator[i]['&'] = 
+        operator[i][']'] = TOKEN_TYPE_OPERATOR;
+}
+
+int fsm_operator_next(int state, char c)
+{
+    return operator[state][c];
 }

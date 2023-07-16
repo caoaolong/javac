@@ -76,11 +76,17 @@ token *token_make_symbol(lexer_process *process)
         .type = TOKEN_TYPE_SYMBOL, .cval = c});
 }
 
+extern char prefix;
+
 token *token_make_string_number(lexer_process *process, int type)
 {
     int i = 0;
     char c = process->next(process);
     struct buffer *buf = buffer_create();
+    if (prefix > 0) {
+        buffer_write(buf, prefix);
+        prefix = 0;
+    }
     while (true) {
         switch(type) {
             case TOKEN_TYPE_STRING:
@@ -105,4 +111,30 @@ token *token_make_string_number(lexer_process *process, int type)
     buffer_write(buf, 0);
     return token_create(process, &(token){
         .type = type, .sval = buffer_ptr(buf)});
+}
+
+token *token_make_operator(lexer_process *process)
+{
+    int i = 0;
+    char c = process->next(process);
+    struct buffer *buf = buffer_create();
+    if (prefix > 0) {
+        buffer_write(buf, prefix);
+        prefix = 0;
+    }
+    while (true) {
+        i = fsm_operator_next(i, c);
+        if (i == -1) {
+            buffer_free(buf);
+            return NULL;
+        } else if (i == TOKEN_TYPE_OPERATOR) {
+            process->push(process, c);
+            break;
+        } else
+            buffer_write(buf, c); 
+        c = process->next(process);
+    }
+    buffer_write(buf, 0);
+    return token_create(process, &(token){
+        .type = TOKEN_TYPE_OPERATOR, .sval = buffer_ptr(buf)});
 }

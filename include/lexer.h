@@ -17,7 +17,7 @@ struct lexer_process_t {
 
 lexer_process *lexer_process_create(compile_process *compiler);
 void lexer_process_free(lexer_process *process);
-
 int lexer(lexer_process *process);
+void brackets_verify(lexer_process *process, struct vector *brackets, token *tk);
 
 #endif

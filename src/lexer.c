@@ -97,27 +97,53 @@ int lexer(lexer_process *process)
     lex_process = process;
     lex_process->pos.filename = lex_process->compiler->ifile.path;
     token *tk;
+    // 括号栈
+    struct vector *brackets = vector_create(sizeof(token));
     do {
         tk = tokens();
-        if (tk) vector_push(lex_process->tokens, tk);
+        if (tk) {
+            brackets_verify(process, brackets, tk);
+            vector_push(lex_process->tokens, tk);
+        }
     } while(tk);
 
-    size_t size = vector_count(lex_process->tokens);
-    token *elem = (token*)vector_data_ptr(lex_process->tokens);
-    for (size_t i = 0; i < size; i++)
-    {
-        if (elem->type == TOKEN_TYPE_IDENTIFIER 
+    if (!vector_empty(brackets))
+        compile_error(process->compiler, "括号没有正确结束\n");
+
+    while(true) {
+        token *elem = (token*)vector_peek(lex_process->tokens);
+        if (!elem) 
+            break;
+        else if (elem->type == TOKEN_TYPE_IDENTIFIER 
             || elem->type == TOKEN_TYPE_KEYWORD
             || elem->type == TOKEN_TYPE_STRING
             || elem->type == TOKEN_TYPE_NUMBER
             || elem->type == TOKEN_TYPE_OPERATOR
-            || elem->type == TOKEN_TYPE_CHAR) {
+            || elem->type == TOKEN_TYPE_CHAR)
             printf("token<value=%s,type=%#x>\n", (char *)elem->sval, elem->type);
-        } else if (elem->type == TOKEN_TYPE_SYMBOL) {
-            printf("token<value=%c,type=%d>\n", elem->cval, elem->type);
-        }
+        else if (elem->type == TOKEN_TYPE_SYMBOL)
+            printf("token<value=%c,type=%#x>\n", elem->cval, elem->type);
         elem += 1;
-    }
-    
+    };
+
     return JAVAC_LEXER_OK;
+}
+
+void brackets_verify(lexer_process *process, struct vector *brackets, token *tk)
+{
+    if (tk->type == TOKEN_TYPE_SYMBOL) {
+        if (tk->cval == '(' || tk->cval == '[' || tk->cval == '{')
+            vector_push(brackets, tk);
+        else if (tk->cval == ')' || tk->cval == ']' || tk->cval == '}') {
+            token *elem = (token*)vector_back(brackets);
+            if (elem->cval == '(')
+                vector_pop(brackets);
+            else if (elem->cval == '[')
+                vector_pop(brackets);
+            else if (elem->cval == '{')
+                vector_pop(brackets);
+            else
+                compile_error(process->compiler, "括号不匹配: %c\n", tk->cval);
+        }
+    }
 }

@@ -25,6 +25,32 @@ static bool is_keyword(const char *value)
         || SEQ(value, "return")|| SEQ(value, "transient");
 }
 
+static bool is_character(struct buffer *buffer, int size)
+{
+    if (size == 1) {
+        char c1 = buffer_read(buffer);
+        return (c1 & 0x7F) == c1;
+    } else if (size == 2) {
+        unsigned char c1 = buffer_read(buffer);
+        unsigned char c2 = buffer_read(buffer);
+        short v = c1 | (c2 << 8);
+        return (v & 0xBFDF) == v;
+    } else if (size == 3) {
+        unsigned char c1 = buffer_read(buffer);
+        unsigned char c2 = buffer_read(buffer);
+        unsigned char c3 = buffer_read(buffer);
+        int v = c1 | (c2 << 8) | (c3 << 16);
+        return (v & 0xBFBFEF) == v;
+    } else if (size == 4) {
+        unsigned char c1 = buffer_read(buffer);
+        unsigned char c2 = buffer_read(buffer);
+        unsigned char c3 = buffer_read(buffer);
+        unsigned char c4 = buffer_read(buffer);
+        int v = c1 | (c2 << 8) | (c3 << 16) | (c4 << 24);
+        return (v & 0xBFBFBFF7) == v;
+    }
+}
+
 token *token_create(lexer_process *process, token *_token)
 {
     memcpy(&tmp_token, _token, sizeof(token));
@@ -78,19 +104,22 @@ token *token_make_symbol(lexer_process *process)
 
 token *token_make_string_number(lexer_process *process, int type)
 {
-    int i = 0;
+    int i = 0, counter = 0;
     char c = process->next(process);
     struct buffer *buf = buffer_create();
     while (true) {
         switch(type) {
             case TOKEN_TYPE_STRING:
                 i = fsm_string_next(i, c);
+                counter ++;
                 break;
             case TOKEN_TYPE_NUMBER:
                 i = fsm_number_next(i, c);
+                counter ++;
                 break;
             case TOKEN_TYPE_COMMENT:
                 i = fsm_comment_next(i, c);
+                counter ++;
                 break;
             default:
                 return NULL;
@@ -101,8 +130,10 @@ token *token_make_string_number(lexer_process *process, int type)
         } else if (i == TOKEN_TYPE_STRING || i == TOKEN_TYPE_NUMBER || i == TOKEN_TYPE_COMMENT) {
             process->push(process, c);
             break;
-        } else
-            buffer_write(buf, c); 
+        } else {
+            if ((type == TOKEN_TYPE_STRING && counter > 1 && i < 3) || type != TOKEN_TYPE_STRING)
+                buffer_write(buf, c);
+        }
         c = process->next(process);
     }
     buffer_write(buf, 0);
@@ -134,7 +165,7 @@ token *token_make_operator(lexer_process *process)
 
 token *token_make_character(lexer_process *process)
 {
-    int i = 0;
+    int i = 0, counter = 0;
     unsigned char c = process->next(process);
     struct buffer *buf = buffer_create();
     while (true) {
@@ -142,16 +173,23 @@ token *token_make_character(lexer_process *process)
         if (i == -1) {
             buffer_free(buf);
             return NULL;
-        } else if (i == TOKEN_TYPE_CHAR) {
-            buffer_write(buf, c);
+        } else if (i == TOKEN_TYPE_CHAR)
             break;
-        } else
-            buffer_write(buf, c); 
+        else if (i > 0) {
+            if (counter > 0) 
+                buffer_write(buf, c);
+            counter ++;
+        }
         c = process->next(process);
     }
-    buffer_write(buf, 0);
-    return token_create(process, &(token){
-        .type = TOKEN_TYPE_CHAR, .sval = buffer_ptr(buf)});
+
+    if (!is_character(buf, counter - 1) || counter > 5)
+        compile_error(process->compiler, "非法字符1\n");
+    else {
+        buffer_write(buf, 0);
+        return token_create(process, &(token){
+            .type = TOKEN_TYPE_CHAR, .sval = buffer_ptr(buf)});
+    }
 }
 
 token *handle_comment(lexer_process *process)

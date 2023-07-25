@@ -4,12 +4,6 @@
 #include "javac.h"
 
 typedef struct {
-    int line;
-    int col;
-    const char *filename;
-} position;
-
-typedef struct {
 
     struct {
         FILE *ifp;
@@ -20,6 +14,8 @@ typedef struct {
 
     position pos;
 
+    struct vector *node_vec;
+    struct vector *node_tree_vec;
 } compile_process;
 
 compile_process* compile_process_create(const char *ifile, const char *ofile, int flags);

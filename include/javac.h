@@ -55,6 +55,12 @@ enum {
     JAVAC_LEXER_OK
 };
 
+typedef struct {
+    int line;
+    int col;
+    const char *filename;
+} position;
+
 int compile_file(const char *ifile, const char *ofile, int flags);
 
 #endif

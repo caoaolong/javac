@@ -13,6 +13,8 @@ all:$(BUILD)/helpers/buffer.o \
 	$(BUILD)/process.o \
 	$(BUILD)/fsm.o \
 	$(BUILD)/token.o \
+	$(BUILD)/node.o \
+	$(BUILD)/parser.o \
 	$(BUILD)/javac.o
 	gcc -g -I$(INCLUDE) main.c $^ -o ./javac
 

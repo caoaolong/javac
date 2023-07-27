@@ -49,6 +49,7 @@ static bool is_character(struct buffer *buffer, int size)
         int v = c1 | (c2 << 8) | (c3 << 16) | (c4 << 24);
         return (v & 0xBFBFBFF7) == v;
     }
+    return false;
 }
 
 token *token_create(lexer_process *process, token *_token)
@@ -190,6 +191,7 @@ token *token_make_character(lexer_process *process)
         return token_create(process, &(token){
             .type = TOKEN_TYPE_CHAR, .sval = buffer_ptr(buf)});
     }
+    return NULL;
 }
 
 token *handle_comment(lexer_process *process)

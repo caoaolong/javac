@@ -4,6 +4,19 @@
 #include "javac.h"
 #include "lexer.h"
 
+enum 
+{
+    OPERATOR_PRECEDENCE_LEFT_TO_RIGHT,
+    OPERATOR_PRECEDENCE_RIGHT_TO_LEFT
+};
+
+typedef struct {
+    const char *operator;
+    int order;
+    int precedence;
+    int ec;
+} operator_precedence;
+
 enum
 {
     NODE_TYPE_EXPRESSION = 0x10,

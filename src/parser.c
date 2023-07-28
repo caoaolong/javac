@@ -1,5 +1,59 @@
 #include "parser.h"
 
+operator_precedence op_precedence[] = {
+    // 1
+    {.operator = "++", .ec = 1, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 1},
+    {.operator = "--", .ec = 1, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 1},
+    {.operator = "!", .ec = 1, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 1},
+    {.operator = "~", .ec = 1, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 1},
+    // 2
+    {.operator = "*", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 2},
+    {.operator = "/", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 2},
+    {.operator = "%", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 2},
+    // 3
+    {.operator = "+", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 3},
+    {.operator = "-", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 3},
+    // 4
+    {.operator = "<<", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 4},
+    {.operator = ">>", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 4},
+    {.operator = ">>>", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 4},
+    // 5
+    {.operator = "<", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 5},
+    {.operator = "<=", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 5},
+    {.operator = ">", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 5},
+    {.operator = ">=", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 5},
+    {.operator = "instanceof", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 5},
+    // 6
+    {.operator = "==", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 6},
+    {.operator = "!=", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 6},
+    // 7
+    {.operator = "&", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 7},
+    // 8
+    {.operator = "^", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 8},
+    // 9
+    {.operator = "|", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 9},
+    // 10
+    {.operator = "&&", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 10},
+    // 11
+    {.operator = "||", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 11},
+    // 12
+    {.operator = "?", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 12},
+    {.operator = ":", .ec = 2, .order = OPERATOR_PRECEDENCE_LEFT_TO_RIGHT, .precedence = 12},
+    // 13
+    {.operator = "=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = "+=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = "-=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = "*=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = "/=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = "%=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = "<<=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = ">>=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = ">>>=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = "&=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = "^=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
+    {.operator = "|=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13}
+};
+
 int parse_expression(struct vector *expression)
 {
     struct vector *ops = vector_create(sizeof(node*));

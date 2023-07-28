@@ -14,8 +14,10 @@ typedef struct {
 
     position pos;
 
-    struct vector *node_vec;
-    struct vector *node_tree_vec;
+    struct {
+        struct vector *expressions;
+        struct vector *statements;
+    } ast;
 } compile_process;
 
 compile_process* compile_process_create(const char *ifile, const char *ofile, int flags);

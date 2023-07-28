@@ -51,8 +51,10 @@
 enum {
     JAVAC_OK,
     JAVAC_ERROR,
+    JAVAC_LEXER_OK,
     JAVAC_LEXER_ERROR,
-    JAVAC_LEXER_OK
+    JAVAC_PARSE_OK,
+    JAVAC_PARSE_ERROR
 };
 
 typedef struct {

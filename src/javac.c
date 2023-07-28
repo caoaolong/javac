@@ -1,5 +1,6 @@
 #include "process.h"
 #include "lexer.h"
+#include "parser.h"
 #include <stdio.h>
 
 int compile_file(const char *ifile, const char *ofile, int flags)
@@ -13,6 +14,9 @@ int compile_file(const char *ifile, const char *ofile, int flags)
         return JAVAC_ERROR;
     if (lexer(lexer_process) != JAVAC_LEXER_OK)
         return JAVAC_LEXER_ERROR;
+    // generate abstract syntax tree
+    if (parse(lexer_process) != JAVAC_PARSE_OK)
+        return JAVAC_PARSE_ERROR;
     
     return JAVAC_OK;
 }

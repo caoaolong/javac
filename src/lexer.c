@@ -110,22 +110,6 @@ int lexer(lexer_process *process)
     if (!vector_empty(brackets))
         compile_error(process->compiler, "括号没有正确结束\n");
 
-    while(true) {
-        token *elem = (token*)vector_peek(lex_process->tokens);
-        if (!elem) 
-            break;
-        else if (elem->type == TOKEN_TYPE_IDENTIFIER 
-            || elem->type == TOKEN_TYPE_KEYWORD
-            || elem->type == TOKEN_TYPE_STRING
-            || elem->type == TOKEN_TYPE_NUMBER
-            || elem->type == TOKEN_TYPE_OPERATOR
-            || elem->type == TOKEN_TYPE_CHAR)
-            printf("token<value=%s,type=%#x>\n", (char *)elem->sval, elem->type);
-        else if (elem->type == TOKEN_TYPE_SYMBOL)
-            printf("token<value=%c,type=%#x>\n", elem->cval, elem->type);
-        elem += 1;
-    };
-
     return JAVAC_LEXER_OK;
 }
 

@@ -2,6 +2,14 @@
 #define JAVAC_AST_H
 
 #include "javac.h"
+#include "lexer.h"
+
+enum
+{
+    NODE_TYPE_EXPRESSION = 0x10,
+    NODE_TYPE_DELIMITER,
+    NODE_TYPE_STATEMENT
+};
 
 typedef struct node_t node;
 
@@ -19,14 +27,20 @@ struct node_t {
             const char *op;
         } exp;
     };
-    const char *value;
+    struct {
+        int ttype;
+        const char *val;
+    } value;
 };
 
 void node_set_vector(struct vector *vec, struct vector *root_vec);
 
 node *node_create(struct node_t *node);
 void node_push(struct node_t *node);
-node *node_pop();
-node *node_peek();
+void node_push_delimiter(int type);
+node *node_pop(int type);
+node *node_peek(int type);
+
+void node_create_expression(lexer_process *process, token *tk);
 
 #endif

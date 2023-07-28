@@ -37,7 +37,7 @@ int parse(lexer_process *process)
     };
 
     // parse expression
-    if (parse_expression(process) != JAVAC_PARSE_OK)
+    if (parse_expression(process->compiler->ast.expressions) != JAVAC_PARSE_OK)
         return JAVAC_PARSE_ERROR;
 
     return JAVAC_PARSE_OK;

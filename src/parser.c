@@ -95,7 +95,7 @@ int parse_expression(struct vector *expression)
     struct vector *ops = vector_create(sizeof(node*));
     struct vector *values = vector_create(sizeof(node*));
     node *n = vector_peek(expression);
-    while (n) {
+    while (n && n->type) {
         vector_push(n->value.ttype == TOKEN_TYPE_OPERATOR ? ops : values, &n);
         n++;
     }

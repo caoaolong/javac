@@ -1,6 +1,8 @@
 #include "parser.h"
 
-operator_precedence op_precedence[] = {
+#define OPERATOR_SIZE   34
+
+static operator_precedence op_precedence[] = {
     // 1
     {.operator = "++", .ec = 1, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 1},
     {.operator = "--", .ec = 1, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 1},
@@ -53,6 +55,40 @@ operator_precedence op_precedence[] = {
     {.operator = "^=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13},
     {.operator = "|=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13}
 };
+
+static bool operator_is_prioritized(const char *op1, const char *op2)
+{
+    operator_precedence *opp1 = NULL, *opp2 = NULL, *entry = NULL;
+    for (int i = 0; i < OPERATOR_SIZE; i ++) {
+        if (opp1 && opp2)
+            break;
+        entry = &op_precedence[i];
+        if (SEQ(entry->operator, op1)) {
+            opp1 = &op_precedence[i];
+            continue;
+        } else if (SEQ(entry->operator, op2)) {
+            opp2 = &op_precedence[i];
+            continue;
+        }
+    }
+
+    if (!opp1 || !opp2)
+        return false;
+    
+    return opp1->precedence < opp2->precedence;
+}
+
+static operator_precedence *operator_get_precedence(const char *op)
+{
+    operator_precedence *opp = NULL;
+    for (int i = 0; i < OPERATOR_SIZE; i ++) {
+        if (SEQ(op_precedence[i].operator, op)) {
+            opp = &op_precedence[i];
+            break;
+        }
+    }
+    return opp;
+}
 
 int parse_expression(struct vector *expression)
 {

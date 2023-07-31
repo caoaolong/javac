@@ -15,7 +15,7 @@ void node_set_vector(struct vector *expression_vec, struct vector *statement_vec
 
 node *node_create(struct node_t *node)
 {
-    struct node_t *nn = malloc(sizeof(struct node_t));
+    struct node_t *nn = calloc(1, sizeof(struct node_t));
     memcpy(nn, node, sizeof(struct node_t));
     node_push(nn);
     return nn;
@@ -70,7 +70,7 @@ void node_create_expression(lexer_process *process, token *tk)
     node *n = NULL;
     switch (tk->type) {
         case TOKEN_TYPE_NUMBER:
-            n = node_create(&(struct node_t){
+            n = node_create(&(node){
                 .value = { .val = tk->sval, .ttype = tk->type }, .type = NODE_TYPE_EXPRESSION});
             break;
         case TOKEN_TYPE_STRING:
@@ -86,5 +86,26 @@ void node_create_expression(lexer_process *process, token *tk)
             n = node_create(&(node){
                 .exp.op = tk->sval, .value.ttype = tk->type, .type = NODE_TYPE_EXPRESSION});
             break;
+        case TOKEN_TYPE_SYMBOL:
+            n = node_create(&(node){
+                .exp.symbol = tk->cval, .value.ttype = tk->type, .type = NODE_TYPE_EXPRESSION});
+            break;
     }
+}
+
+node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct node_t *np)
+{
+    struct node_t *nn1 = calloc(1, sizeof(struct node_t)), *nn2 = calloc(1, sizeof(struct node_t));
+    memcpy(nn1, n1, sizeof(struct node_t));
+    memcpy(nn2, n2, sizeof(struct node_t));
+    if (np->exp.opp) {
+        if (np->exp.opp->order == OPERATOR_PRECEDENCE_LEFT_TO_RIGHT) {
+            np->exp.left = nn2;
+            np->exp.right = nn1;
+        } else if (np->exp.opp->order == OPERATOR_PRECEDENCE_RIGHT_TO_LEFT) {
+            np->exp.left = nn1;
+            np->exp.right = nn2;
+        }
+    }
+    return np;
 }

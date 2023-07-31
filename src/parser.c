@@ -90,15 +90,99 @@ static operator_precedence *operator_get_precedence(const char *op)
     return opp;
 }
 
+static void parse_expression_node_pop(struct vector *ops, struct vector *values, node *n)
+{
+    if (n->value.ttype == TOKEN_TYPE_SYMBOL && n->exp.symbol == ')') {
+        n = vector_back(ops);
+        parse_expression_node_pop(ops, values, n);
+        return;
+    } else if (n->value.ttype == TOKEN_TYPE_SYMBOL && n->exp.symbol == '(') {
+        vector_pop(ops);
+        n = vector_back(ops);
+        parse_expression_node_pop(ops, values, n);
+        return;
+    }
+    
+    n->exp.opp = operator_get_precedence(n->exp.op);
+    // 操作数弹栈
+    node *n1 = vector_back(values), *n2 = NULL;
+    vector_pop(values);
+    if (n->exp.opp->ec > 1) {
+        n2 = vector_back(values);
+        vector_pop(values);
+    }
+    // 运算符弹栈
+    node *np = vector_back(ops);    
+    np->exp.opp = operator_get_precedence(np->exp.op);
+    vector_pop(ops);
+    // 构造结果入栈
+    node *nn = node_create_expression_tree(n1, n2, np);
+    vector_push(values, nn);
+}
+
+static void parse_expression_node(struct vector *ops, struct vector *values, node *n)
+{
+    // 操作数直接入栈
+    if (n->value.ttype != TOKEN_TYPE_OPERATOR && n->value.ttype != TOKEN_TYPE_SYMBOL) {
+        vector_push(values, n);
+        return;
+    }
+
+    // 栈为空或者遇到左括号则直接入栈
+    if (vector_empty(ops) || (n->exp.symbol == '(' && n->value.ttype == TOKEN_TYPE_SYMBOL)) {
+        vector_push(ops, n);
+        return;
+    }
+
+    // 遇到右括号直接出栈直到遇到左括号
+    if (n->exp.symbol == ')' && n->value.ttype == TOKEN_TYPE_SYMBOL) {
+        node *nt = NULL;
+        while(true) {
+            nt = vector_back(ops);
+            if (nt->value.ttype == TOKEN_TYPE_SYMBOL && nt->exp.symbol == '(') {
+                vector_pop(ops);
+                return;
+            }
+            // 弹栈组装树结构
+            parse_expression_node_pop(ops, values, nt);
+        }
+    }
+
+    // 比较优先级再决定是否入栈
+    node *np = vector_back(ops);
+    if (np->value.ttype == TOKEN_TYPE_SYMBOL && np->exp.symbol == '(') {
+        vector_push(ops, n);
+        return;
+    }
+
+    if (operator_is_prioritized(n->exp.op, np->exp.op)) {
+        vector_push(ops, n);
+    } else {
+        // 弹栈组装树结构
+        parse_expression_node_pop(ops, values, n);
+        // 再次尝试运算符入栈
+        parse_expression_node(ops, values, n);
+    }
+}
+
 int parse_expression(struct vector *expression)
 {
-    struct vector *ops = vector_create(sizeof(node*));
-    struct vector *values = vector_create(sizeof(node*));
-    node *n = vector_peek(expression);
-    while (n) {
-        vector_push(n->value.ttype == TOKEN_TYPE_OPERATOR ? ops : values, &n);
-        n++;
+    struct vector *ops = vector_create(sizeof(node));
+    struct vector *values = vector_create(sizeof(node));
+    int count = vector_count(expression);
+    node *n = NULL;
+    for (int i = 0; i < count; i++) {
+        n = vector_peek_at(expression, i);
+        if (n && n->type != NODE_TYPE_DELIMITER)
+            parse_expression_node(ops, values, n);
     }
+    // 清空运算符栈
+    n = vector_back(ops);
+    while (vector_count(ops) > 0) {
+        parse_expression_node_pop(ops, values, n);
+    }
+    n = vector_peek(values);
+    vector_pop(values);
     return JAVAC_PARSE_OK;
 }
 
@@ -121,8 +205,9 @@ int parse(lexer_process *process)
             continue;
         }
         
-        if (exp) 
+        if (exp) {
             node_create_expression(process, elem);
+        }
         elem ++;
     };
 

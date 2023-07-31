@@ -38,6 +38,8 @@ struct node_t {
             struct node_t *left;
             struct node_t *right;
             const char *op;
+            const char symbol;
+            operator_precedence *opp;
         } exp;
     };
     struct {
@@ -55,5 +57,6 @@ node *node_pop(int type);
 node *node_peek(int type);
 
 void node_create_expression(lexer_process *process, token *tk);
+node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct node_t *np);
 
 #endif

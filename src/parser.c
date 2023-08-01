@@ -90,6 +90,15 @@ static operator_precedence *operator_get_precedence(const char *op)
     return opp;
 }
 
+static bool is_expression_begin(token *tk)
+{
+    return tk->type == TOKEN_TYPE_OPERATOR && (
+        SEQ(tk->sval, "=") || SEQ(tk->sval, "+=") || SEQ(tk->sval, "-=") || SEQ(tk->sval, "*=") ||
+        SEQ(tk->sval, "/=") || SEQ(tk->sval, "%=") || SEQ(tk->sval, ">>=") || SEQ(tk->sval, "<<=") || 
+        SEQ(tk->sval, ">>>=") || SEQ(tk->sval, "|=") || SEQ(tk->sval, "&=") || SEQ(tk->sval, "^=")
+    );
+}
+
 static void parse_expression_node_pop(struct vector *ops, struct vector *values, node *n)
 {
     if (n->value.ttype == TOKEN_TYPE_SYMBOL && n->exp.symbol == ')') {
@@ -102,8 +111,8 @@ static void parse_expression_node_pop(struct vector *ops, struct vector *values,
         parse_expression_node_pop(ops, values, n);
         return;
     }
-    
-    n->exp.opp = operator_get_precedence(n->exp.op);
+    char vop[2] = { n->exp.symbol, 0 };
+    n->exp.opp = operator_get_precedence(n->value.ttype == TOKEN_TYPE_SYMBOL ? vop : n->exp.op);
     // 操作数弹栈
     node *n1 = vector_back(values), *n2 = NULL;
     vector_pop(values);
@@ -118,6 +127,47 @@ static void parse_expression_node_pop(struct vector *ops, struct vector *values,
     // 构造结果入栈
     node *nn = node_create_expression_tree(n1, n2, np);
     vector_push(values, nn);
+}
+
+static void parse_expression_node(struct vector *ops, struct vector *values, node *n);
+
+static void parse_node_push(struct vector *ops, struct vector *values, node *n)
+{
+    // 比较优先级再决定是否入栈
+    node *np = vector_back(ops);
+    if (np->value.ttype == TOKEN_TYPE_SYMBOL && np->exp.symbol == '(') {
+        vector_push(ops, n);
+        return;
+    }
+
+    if (n->exp.op && np->exp.op && operator_is_prioritized(n->exp.op, np->exp.op)) {
+        vector_push(ops, n);
+        return;
+    } else if (n->value.ttype == TOKEN_TYPE_SYMBOL && np->value.ttype != TOKEN_TYPE_SYMBOL) {
+        char vn[2] = { n->exp.symbol, 0};
+        if (operator_is_prioritized(vn, np->exp.op)) {
+            vector_push(ops, n);
+            return;
+        }
+    } else if (n->value.ttype != TOKEN_TYPE_SYMBOL && np->value.ttype == TOKEN_TYPE_SYMBOL) {
+        char vnp[2] = { np->exp.symbol, 0};
+        if (operator_is_prioritized(n->exp.op, vnp)) {
+            vector_push(ops, n);
+            return;
+        }
+    } else if (n->value.ttype == TOKEN_TYPE_SYMBOL && np->value.ttype == TOKEN_TYPE_SYMBOL) {
+        char vn[2] = { n->exp.symbol, 0};
+        char vnp[2] = { np->exp.symbol, 0};
+        if (operator_is_prioritized(vn, vnp)) {
+            vector_push(ops, n);
+            return;
+        }
+    }
+
+    // 弹栈组装树结构
+    parse_expression_node_pop(ops, values, n);
+    // 再次尝试运算符入栈
+    parse_expression_node(ops, values, n);
 }
 
 static void parse_expression_node(struct vector *ops, struct vector *values, node *n)
@@ -147,42 +197,31 @@ static void parse_expression_node(struct vector *ops, struct vector *values, nod
             parse_expression_node_pop(ops, values, nt);
         }
     }
-
-    // 比较优先级再决定是否入栈
-    node *np = vector_back(ops);
-    if (np->value.ttype == TOKEN_TYPE_SYMBOL && np->exp.symbol == '(') {
-        vector_push(ops, n);
-        return;
-    }
-
-    if (operator_is_prioritized(n->exp.op, np->exp.op)) {
-        vector_push(ops, n);
-    } else {
-        // 弹栈组装树结构
-        parse_expression_node_pop(ops, values, n);
-        // 再次尝试运算符入栈
-        parse_expression_node(ops, values, n);
-    }
+    parse_node_push(ops, values, n);
 }
 
 int parse_expression(struct vector *expression)
 {
     struct vector *ops = vector_create(sizeof(node));
     struct vector *values = vector_create(sizeof(node));
-    int count = vector_count(expression);
-    node *n = NULL;
-    for (int i = 0; i < count; i++) {
-        n = vector_peek_at(expression, i);
-        if (n && n->type != NODE_TYPE_DELIMITER)
-            parse_expression_node(ops, values, n);
+    node *n = vector_peek_no_increment(expression);
+    while (true) {
+        if (n->type == NODE_TYPE_DELIMITER) {
+            vector_peek_pop(expression);
+            break;
+        }
+        parse_expression_node(ops, values, n);
+        vector_peek_pop(expression);
+        n = vector_peek_no_increment(expression);
     }
     // 清空运算符栈
     n = vector_back(ops);
     while (vector_count(ops) > 0) {
         parse_expression_node_pop(ops, values, n);
     }
-    n = vector_peek(values);
-    vector_pop(values);
+    vector_push(expression, vector_peek(values));
+    vector_free(ops);
+    vector_free(values);
     return JAVAC_PARSE_OK;
 }
 
@@ -194,7 +233,7 @@ int parse(lexer_process *process)
     token *elem = (token*)vector_peek(process->tokens);
     // 区分Expression和Statement
     while(elem && elem->type) {
-        if (elem->type == TOKEN_TYPE_OPERATOR && SEQ(elem->sval, "=")) {
+        if (is_expression_begin(elem)) {
             exp = true;
             elem ++;
             continue;
@@ -209,7 +248,7 @@ int parse(lexer_process *process)
             node_create_expression(process, elem);
         }
         elem ++;
-    };
+    }
 
     // parse expression
     if (parse_expression(process->compiler->ast.expressions) != JAVAC_PARSE_OK)

@@ -93,18 +93,43 @@ void node_create_expression(lexer_process *process, token *tk)
     }
 }
 
+node ec3node;
+
 node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct node_t *np)
 {
-    struct node_t *nn1 = calloc(1, sizeof(struct node_t)), *nn2 = calloc(1, sizeof(struct node_t));
+    if (np->exp.symbol == '?') {
+        ec3node.exp.left = n2->exp.left;
+        ec3node.exp.right = n2->exp.right;
+        struct node_t *nn1 = calloc(1, sizeof(struct node_t));
+        memcpy(nn1, n1, sizeof(struct node_t));
+        ec3node.exp.test.consequent = nn1;
+        return np;
+    }
+
+    if (np->exp.symbol == ':') {
+        struct node_t *nn1 = calloc(1, sizeof(struct node_t));
+        memcpy(nn1, n1, sizeof(struct node_t));
+        ec3node.exp.test.alternate = nn1;
+        struct node_t *nnp = calloc(1, sizeof(struct node_t));
+        memcpy(nnp, &ec3node, sizeof(struct node_t));
+        return nnp;
+    }
+
+    struct node_t *nn1 = calloc(1, sizeof(struct node_t)), *nn2 = NULL;
     memcpy(nn1, n1, sizeof(struct node_t));
-    memcpy(nn2, n2, sizeof(struct node_t));
+    if (n2) {
+        nn2 = calloc(1, sizeof(struct node_t));
+        memcpy(nn2, n2, sizeof(struct node_t));
+    }
     if (np->exp.opp) {
         if (np->exp.opp->order == OPERATOR_PRECEDENCE_LEFT_TO_RIGHT) {
-            np->exp.left = nn2;
+            if (nn2) 
+                np->exp.left = nn2;
             np->exp.right = nn1;
         } else if (np->exp.opp->order == OPERATOR_PRECEDENCE_RIGHT_TO_LEFT) {
             np->exp.left = nn1;
-            np->exp.right = nn2;
+            if (nn2)
+                np->exp.right = nn2;
         }
     }
     return np;

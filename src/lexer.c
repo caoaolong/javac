@@ -101,7 +101,7 @@ int lexer(lexer_process *process)
     struct vector *brackets = vector_create(sizeof(token));
     do {
         tk = tokens();
-        if (tk) {
+        if (tk && tk->type) {
             brackets_verify(process, brackets, tk);
             vector_push(lex_process->tokens, tk);
         }

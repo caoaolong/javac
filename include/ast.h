@@ -34,10 +34,18 @@ struct node_t {
         struct node_t *function;
     } bind;
     union {
-        struct exp {
+        // 算数运算表达式结构
+        struct {
             struct node_t *left;
             struct node_t *right;
             const char *op;
+            const char symbol;
+            operator_precedence *opp;
+            // 三目运算
+            struct {
+                struct node_t *consequent;
+                struct node_t *alternate;
+            } test;
         } exp;
     };
     struct {
@@ -55,5 +63,6 @@ node *node_pop(int type);
 node *node_peek(int type);
 
 void node_create_expression(lexer_process *process, token *tk);
+node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct node_t *np);
 
 #endif

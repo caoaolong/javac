@@ -30,6 +30,8 @@ typedef struct {
     };
 } token;
 
+bool token_is_keyword(token *tk);
+
 token *token_make_identifier_keyword(lexer_process *process);
 token *token_make_symbol(lexer_process *process);
 token *token_make_string_number(lexer_process *process, int type);

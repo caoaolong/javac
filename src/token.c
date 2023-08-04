@@ -198,3 +198,8 @@ token *handle_comment(lexer_process *process)
 {
     return token_make_string_number(process, TOKEN_TYPE_COMMENT);
 }
+
+bool token_is_keyword(token *tk)
+{
+    return is_keyword(tk->sval);
+}

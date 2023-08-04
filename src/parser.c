@@ -242,6 +242,8 @@ int parse(lexer_process *process)
             exp = false;
             elem ++;
             continue;
+        } else if (token_is_keyword(elem)) {
+            
         }
         
         if (exp) {

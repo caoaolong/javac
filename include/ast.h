@@ -22,7 +22,8 @@ enum
     NODE_TYPE_EXPRESSION = 0x10,
     NODE_TYPE_DELIMITER,
     // STATEMENT
-    NODE_TYPE_STATEMENT_VARIABLE,
+    NODE_TYPE_STATEMENT,
+    NODE_TYPE_STATEMENT_DECLARE,
     NODE_TYPE_STATEMENT_STRUCT,
     NODE_TYPE_STATEMENT_BODY,
     NODE_TYPE_STATEMENT_FUNCTION
@@ -52,9 +53,12 @@ struct node_t {
             } test;
         } exp;
     };
-    struct {
-        int ttype;
-        const char *val;
+    union {
+        struct {
+            int ttype;
+            const char *val;
+        } sval;
+        void *pval;
     } value;
 };
 
@@ -67,6 +71,7 @@ node *node_pop(int type);
 node *node_peek(int type);
 
 void node_create_expression(lexer_process *process, token *tk);
+void node_create_declare(lexer_process *process, token *tk);
 node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct node_t *np);
 
 #endif

@@ -1,61 +1,60 @@
 #include "parser.h"
 #include "token.h"
 
-datatype *datatype_create(const char *name, int flags, int type, struct node_t *value)
+datatype *datatype_create()
 {
-    // TODO: datatype_create
-    return NULL;
+    datatype *dt = calloc(1, sizeof(datatype));
+    return dt;
 }
 
-static int array_length = 0;
-
-int datatype_get_array_length()
+void datatype_set_name(node *n, datatype *dtype)
 {
-    return array_length;
+    size_t size = strlen(n->value.sval.val) + 1;
+    dtype->name = malloc(size);
+    strncpy((void*)dtype->name, n->value.sval.val, size);
 }
 
-bool datatype_parse_array(token *tk, datatype *dtype)
+bool datatype_parse_array(node *n, datatype *dtype)
 {
     static bool array = false;
-    if (tk->type == TOKEN_TYPE_SYMBOL) {
-        if (tk->cval == '[')
+    if (n->value.sval.ttype == TOKEN_TYPE_SYMBOL) {
+        if (SEQ(n->value.sval.val, "["))
             array = true;
-        else if (tk->cval == ']' && array)
+        else if (SEQ(n->value.sval.val, "]") && array)
             array = false;
-    } else if (tk->type == TOKEN_TYPE_NUMBER && array)
-        array_length = strtol(tk->sval, NULL, 10);
-    else 
+    } else if (n->value.sval.ttype == TOKEN_TYPE_NUMBER && array) {
+        long array_length = strtol(n->value.sval.val, NULL, 10);
+        dtype->size = dtype->size * array_length;
+    } else 
         return false;
 
     return true;
 }
 
-bool datatype_parse_flags(token *tk, datatype *dtype)
+bool datatype_parse_flags(node *n, datatype *dtype)
 {
-    if (tk->type != TOKEN_TYPE_IDENTIFIER) 
+    if (n->value.sval.ttype != TOKEN_TYPE_KEYWORD) 
         return false;
 
-    if (SEQ(tk->sval, "public")) {
+    if (SEQ(n->value.sval.val, "public")) {
         dtype->flags |= DATATYPE_FLAG_ACCESS_PUBLIC;
-    } else if (SEQ(tk->sval, "protected")) {
+    } else if (SEQ(n->value.sval.val, "protected")) {
         dtype->flags |= DATATYPE_FLAG_ACCESS_PROTECTED;
-    } else if (SEQ(tk->sval, "private")) {
+    } else if (SEQ(n->value.sval.val, "private")) {
         dtype->flags |= DATATYPE_FLAG_ACCESS_PRIVATE;
-    } else if (SEQ(tk->sval, "static")) {
+    } else if (SEQ(n->value.sval.val, "static")) {
         dtype->flags |= DATATYPE_FLAG_STATIC;
-    } else if (SEQ(tk->sval, "final")) {
+    } else if (SEQ(n->value.sval.val, "final")) {
         dtype->flags |= DATATYPE_FLAG_FINAL;
-    } else if (SEQ(tk->sval, "volatile")) {
+    } else if (SEQ(n->value.sval.val, "volatile")) {
         dtype->flags |= DATATYPE_FLAG_VOLATILE;
-    } else if (SEQ(tk->sval, "transient")) {
+    } else if (SEQ(n->value.sval.val, "transient")) {
         dtype->flags |= DATATYPE_FLAG_TRANSIENT;
-    } else if (SEQ(tk->sval, "abstract")) {
+    } else if (SEQ(n->value.sval.val, "abstract")) {
         dtype->flags |= DATATYPE_FLAG_ABSTRACT;
-    } else if (SEQ(tk->sval, "transient")) {
-        dtype->flags |= DATATYPE_FLAG_TRANSIENT;
-    } else if (SEQ(tk->sval, "extends")) {
+    } else if (SEQ(n->value.sval.val, "extends")) {
         dtype->flags |= DATATYPE_FLAG_EXTENDS;
-    } else if (SEQ(tk->sval, "implements")) {
+    } else if (SEQ(n->value.sval.val, "implements")) {
         dtype->flags |= DATATYPE_FLAG_IMPLEMENTS;
     } else
         return false;
@@ -63,33 +62,33 @@ bool datatype_parse_flags(token *tk, datatype *dtype)
     return true;
 }
 
-bool datatype_parse_type(token *tk, datatype* dtype)
+bool datatype_parse_type(node *n, datatype* dtype)
 {
-    if (tk->type != TOKEN_TYPE_KEYWORD)
+    if (n->value.sval.ttype != TOKEN_TYPE_KEYWORD)
         return false;
 
-    if (SEQ(tk->sval, "void")) {
+    if (SEQ(n->value.sval.val, "void")) {
         dtype->type = DATA_TYPE_VOID;
         dtype->size = 0;
-    } else if (SEQ(tk->sval, "byte")) {
+    } else if (SEQ(n->value.sval.val, "byte")) {
         dtype->type = DATA_TYPE_BYTE;
         dtype->size = 1;
-    } else if (SEQ(tk->sval, "char")) {
+    } else if (SEQ(n->value.sval.val, "char")) {
         dtype->type = DATA_TYPE_CHAR;
         dtype->size = 2;
-    } else if (SEQ(tk->sval, "int")) {
+    } else if (SEQ(n->value.sval.val, "int")) {
         dtype->type = DATA_TYPE_INTEGER;
         dtype->size = 4;
-    } else if (SEQ(tk->sval, "long")) {
+    } else if (SEQ(n->value.sval.val, "long")) {
         dtype->type = DATA_TYPE_LONG;
         dtype->size = 8;
-    } else if (SEQ(tk->sval, "float")) {
+    } else if (SEQ(n->value.sval.val, "float")) {
         dtype->type = DATA_TYPE_FLOAT;
         dtype->size = 4;
-    } else if (SEQ(tk->sval, "double")) {
+    } else if (SEQ(n->value.sval.val, "double")) {
         dtype->type = DATA_TYPE_DOUBLE;
         dtype->size = 8;
-    } else if (SEQ(tk->sval, "boolean")) {
+    } else if (SEQ(n->value.sval.val, "boolean")) {
         dtype->type = DATA_TYPE_BOOLEAN;
         dtype->size = 1;
     } else

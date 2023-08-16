@@ -178,6 +178,7 @@ void fsm_number_init()
     
     // SYMBOL: + - * / % | & ? ] ) \b \n \t
     number[13]['+'] = number[2]['+'] = number[15]['+'] = number[14]['+'] = number[7]['+'] = number[8]['+'] = number[9]['+'] = TOKEN_TYPE_NUMBER;
+    number[13][','] = number[2][','] = number[15][','] = number[14][','] = number[7][','] = number[8][','] = number[9][','] = TOKEN_TYPE_NUMBER;
     number[13]['-'] = number[2]['-'] = number[15]['-'] = number[14]['-'] = number[7]['-'] = number[8]['-'] = number[9]['-'] = TOKEN_TYPE_NUMBER;
     number[13]['*'] = number[2]['*'] = number[15]['*'] = number[14]['*'] = number[7]['*'] = number[8]['*'] = number[9]['*'] = TOKEN_TYPE_NUMBER;
     number[13]['/'] = number[2]['/'] = number[15]['/'] = number[14]['/'] = number[7]['/'] = number[8]['/'] = number[9]['/'] = TOKEN_TYPE_NUMBER;

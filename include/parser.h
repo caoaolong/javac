@@ -57,9 +57,11 @@ typedef struct datatype_t {
 
 int parse(lexer_process *process);
 
-datatype *datatype_create(const char *name, int flags, int type, struct node_t *value);
-int datatype_get_array_length();
-bool datatype_parse_flags(token *tk, datatype* dtype);
-bool datatype_parse_type(token *tk, datatype* dtype);
+datatype *datatype_create();
+void datatype_set_name(node *n, datatype *dtype);
+
+bool datatype_parse_array(node *n, datatype *dtype);
+bool datatype_parse_flags(node *n, datatype* dtype);
+bool datatype_parse_type(node *n, datatype* dtype);
 
 #endif

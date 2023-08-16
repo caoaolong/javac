@@ -37,7 +37,7 @@ void node_push_delimiter(int type)
     if (type == NODE_TYPE_EXPRESSION)
         vector_push(expression_vector, &delimiter);
     else if (type == NODE_TYPE_STATEMENT)
-        vector_push(expression_vector, &delimiter);
+        vector_push(statement_vector, &delimiter);
 }
 
 node *node_pop(int type)
@@ -71,24 +71,24 @@ void node_create_expression(lexer_process *process, token *tk)
     switch (tk->type) {
         case TOKEN_TYPE_NUMBER:
             n = node_create(&(node){
-                .value = { .val = tk->sval, .ttype = tk->type }, .type = NODE_TYPE_EXPRESSION});
+                .value = { .sval.val = tk->sval, .sval.ttype = tk->type }, .type = NODE_TYPE_EXPRESSION});
             break;
         case TOKEN_TYPE_STRING:
         case TOKEN_TYPE_CHAR:
             n = node_create(&(node){
-                .value = { .val = tk->sval, .ttype = tk->type }, .type = NODE_TYPE_EXPRESSION});
+                .value = { .sval.val = tk->sval, .sval.ttype = tk->type }, .type = NODE_TYPE_EXPRESSION});
             break;
         case TOKEN_TYPE_IDENTIFIER:
             n = node_create(&(node){
-                .value = { .val = tk->sval, .ttype = tk->type }, .type = NODE_TYPE_EXPRESSION});
+                .value = { .sval.val = tk->sval, .sval.ttype = tk->type }, .type = NODE_TYPE_EXPRESSION});
             break;
         case TOKEN_TYPE_OPERATOR:
             n = node_create(&(node){
-                .exp.op = tk->sval, .value.ttype = tk->type, .type = NODE_TYPE_EXPRESSION});
+                .exp.op = tk->sval, .value.sval.ttype = tk->type, .type = NODE_TYPE_EXPRESSION});
             break;
         case TOKEN_TYPE_SYMBOL:
             n = node_create(&(node){
-                .exp.symbol = tk->cval, .value.ttype = tk->type, .type = NODE_TYPE_EXPRESSION});
+                .exp.symbol = tk->cval, .value.sval.ttype = tk->type, .type = NODE_TYPE_EXPRESSION});
             break;
     }
 }
@@ -133,4 +133,17 @@ node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct n
         }
     }
     return np;
+}
+
+void node_create_declare(lexer_process *process, token *tk)
+{
+    node *n = NULL;
+    switch (tk->type)
+    {
+        case TOKEN_TYPE_KEYWORD:
+        case TOKEN_TYPE_IDENTIFIER:
+            n = node_create(&(node){
+                    .value = { .sval.val = tk->sval, .sval.ttype = tk->type }, .type = NODE_TYPE_STATEMENT});
+            break;
+    }
 }

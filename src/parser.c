@@ -114,17 +114,16 @@ static void attach_expression_to_declare(struct vector *exps, struct vector *sta
     vector_save(stats);
     
     vector_set_peek_pointer_end(stats);
-    node **pn = NULL, *n = NULL;
+    node *n = NULL;
     while (true) {
         n = vector_peek(stats);
         if (n->type & NODE_TYPE_STATEMENT_DECLARE) {
-            pn = &n;
+            if (!vector_empty(exps)) {
+                ((datatype*)n->value.pval)->var.value = vector_back(exps);
+                vector_pop(exps);
+            }
             break;
         }
-    }
-    if (!vector_empty(exps)) {
-        ((datatype*)(*pn)->value.pval)->var.value = vector_back(exps);
-        vector_pop(exps);
     }
 
     vector_restore(stats);

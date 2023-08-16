@@ -109,6 +109,27 @@ static bool is_declare_begin(token *tk)
         SEQ(tk->sval, "double") || SEQ(tk->sval, "float"));
 }
 
+static void attach_expression_to_declare(struct vector *exps, struct vector *stats)
+{
+    vector_save(stats);
+    
+    vector_set_peek_pointer_end(stats);
+    node **pn = NULL, *n = NULL;
+    while (true) {
+        n = vector_peek(stats);
+        if (n->type & NODE_TYPE_STATEMENT_DECLARE) {
+            pn = &n;
+            break;
+        }
+    }
+    if (!vector_empty(exps)) {
+        ((datatype*)(*pn)->value.pval)->var.value = vector_back(exps);
+        vector_pop(exps);
+    }
+
+    vector_restore(stats);
+}
+
 static void parse_expression_node_pop(struct vector *ops, struct vector *values, node *n)
 {
     if (n->value.sval.ttype == TOKEN_TYPE_SYMBOL && n->exp.symbol == ')') {
@@ -258,7 +279,9 @@ int parse_daclare(struct vector *statement)
         vector_peek_pop(statement);
         n = vector_peek_no_increment(statement);
     }
-    node_create(&(node){ .type = NODE_TYPE_STATEMENT_DECLARE, .value.pval = dtype });
+    node_create(&(node){ 
+        .type = NODE_TYPE_STATEMENT | NODE_TYPE_STATEMENT_DECLARE, 
+        .value.pval = dtype });
     return JAVAC_PARSE_OK;
 }
 
@@ -274,11 +297,21 @@ int parse(lexer_process *process)
             exp = true;
             declare = false;
             node_push_delimiter(NODE_TYPE_STATEMENT);
+            // parse declare statement
+            if (parse_daclare(process->compiler->ast.statements) != JAVAC_PARSE_OK)
+                return JAVAC_PARSE_ERROR;
             elem ++;
             continue;
         } else if (elem->type == TOKEN_TYPE_SYMBOL && elem->cval == ';' && exp) {
             node_push_delimiter(NODE_TYPE_EXPRESSION);
             exp = false;
+            // parse expression
+            if (parse_expression(process->compiler->ast.expressions) != JAVAC_PARSE_OK)
+                return JAVAC_PARSE_ERROR;
+            // attach the expression node to the value attribute of declare node
+            attach_expression_to_declare(
+                process->compiler->ast.expressions,
+                process->compiler->ast.statements);
             elem ++;
             continue;
         } else if (is_declare_begin(elem)) {
@@ -292,13 +325,6 @@ int parse(lexer_process *process)
         }
         elem ++;
     }
-    // parse statement
-    if (parse_daclare(process->compiler->ast.statements) != JAVAC_PARSE_OK)
-        return JAVAC_PARSE_ERROR;
-
-    // parse expression
-    if (parse_expression(process->compiler->ast.expressions) != JAVAC_PARSE_OK)
-        return JAVAC_PARSE_ERROR;
 
     return JAVAC_PARSE_OK;
 }

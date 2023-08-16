@@ -28,7 +28,7 @@ void node_push(struct node_t *node)
 
     if (node->type == NODE_TYPE_EXPRESSION)
         vector_push(expression_vector, node);
-    else if (node->type == NODE_TYPE_STATEMENT)
+    else if (node->type & NODE_TYPE_STATEMENT)
         vector_push(statement_vector, node);
 }
 
@@ -45,7 +45,7 @@ node *node_pop(int type)
     struct vector *node_vector = NULL;
     if (type == NODE_TYPE_EXPRESSION)
         node_vector = expression_vector;
-    else if (type == NODE_TYPE_STATEMENT)
+    else if (type & NODE_TYPE_STATEMENT)
         node_vector = statement_vector;
 
     if (vector_empty(node_vector))
@@ -59,7 +59,7 @@ node *node_peek(int type)
 {
     if (type == NODE_TYPE_EXPRESSION)
         return (node *)vector_back(expression_vector);
-    else if (type == NODE_TYPE_STATEMENT)
+    else if (type & NODE_TYPE_STATEMENT)
         return (node *)vector_back(statement_vector);
 
     return NULL;
@@ -98,6 +98,7 @@ node ec3node;
 node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct node_t *np)
 {
     if (np->exp.symbol == '?') {
+        ec3node.type = NODE_TYPE_EXPRESSION;
         ec3node.exp.left = n2->exp.left;
         ec3node.exp.right = n2->exp.right;
         struct node_t *nn1 = calloc(1, sizeof(struct node_t));
@@ -112,6 +113,7 @@ node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct n
         ec3node.exp.test.alternate = nn1;
         struct node_t *nnp = calloc(1, sizeof(struct node_t));
         memcpy(nnp, &ec3node, sizeof(struct node_t));
+        memset(&ec3node, 0, sizeof(node));
         return nnp;
     }
 
@@ -143,7 +145,8 @@ void node_create_declare(lexer_process *process, token *tk)
         case TOKEN_TYPE_KEYWORD:
         case TOKEN_TYPE_IDENTIFIER:
             n = node_create(&(node){
-                    .value = { .sval.val = tk->sval, .sval.ttype = tk->type }, .type = NODE_TYPE_STATEMENT});
+                    .value = { .sval.val = tk->sval, .sval.ttype = tk->type }, 
+                    .type = NODE_TYPE_STATEMENT });
             break;
     }
 }

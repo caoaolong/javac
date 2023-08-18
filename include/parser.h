@@ -36,29 +36,15 @@ enum
     DATA_TYPE_ANNOTATION
 };
 
-typedef struct datatype_t {
+struct datatype_t {
     int flags;
     int type;
     int size;
-    const char *name;
-    union {
-        struct {
-            struct node_t *value;
-        } var;
-        struct {
-            struct node_t *body, *extends;
-            struct vector* implements;
-        } cls;
-        struct {
-            struct node_t *body;
-        } func;
-    };
-} datatype;
+};
 
 int parse(lexer_process *process);
 
 datatype *datatype_create();
-void datatype_set_name(node *n, datatype *dtype);
 
 bool datatype_parse_array(node *n, datatype *dtype);
 bool datatype_parse_flags(node *n, datatype* dtype);

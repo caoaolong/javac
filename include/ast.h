@@ -30,6 +30,7 @@ enum
 };
 
 typedef struct node_t node;
+typedef struct datatype_t datatype;
 
 struct node_t {
     int type;
@@ -52,13 +53,15 @@ struct node_t {
                 struct node_t *alternate;
             } test;
         } exp;
-    };
-    union {
         struct {
-            int ttype;
-            const char *val;
-        } sval;
-        void *pval;
+            struct datatype_t *type;
+            const char *name;
+            struct node_t *value;
+        } var;
+    };
+    struct {
+        int ttype;
+        const char *val;
     } value;
 };
 

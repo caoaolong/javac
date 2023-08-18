@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <stddef.h>
 
 #define OPERATOR_SIZE   34
 
@@ -119,7 +120,7 @@ static void attach_expression_to_declare(struct vector *exps, struct vector *sta
         n = vector_peek(stats);
         if (n->type & NODE_TYPE_STATEMENT_DECLARE) {
             if (!vector_empty(exps)) {
-                ((datatype*)n->value.pval)->var.value = vector_back(exps);
+                n->var.value = vector_back(exps);
                 vector_pop(exps);
             }
             break;
@@ -131,18 +132,18 @@ static void attach_expression_to_declare(struct vector *exps, struct vector *sta
 
 static void parse_expression_node_pop(struct vector *ops, struct vector *values, node *n)
 {
-    if (n->value.sval.ttype == TOKEN_TYPE_SYMBOL && n->exp.symbol == ')') {
+    if (n->value.ttype == TOKEN_TYPE_SYMBOL && n->exp.symbol == ')') {
         n = vector_back(ops);
         parse_expression_node_pop(ops, values, n);
         return;
-    } else if (n->value.sval.ttype == TOKEN_TYPE_SYMBOL && n->exp.symbol == '(') {
+    } else if (n->value.ttype == TOKEN_TYPE_SYMBOL && n->exp.symbol == '(') {
         vector_pop(ops);
         n = vector_back(ops);
         parse_expression_node_pop(ops, values, n);
         return;
     }
     char vop[2] = { n->exp.symbol, 0 };
-    n->exp.opp = operator_get_precedence(n->value.sval.ttype == TOKEN_TYPE_SYMBOL ? vop : n->exp.op);
+    n->exp.opp = operator_get_precedence(n->value.ttype == TOKEN_TYPE_SYMBOL ? vop : n->exp.op);
     // 操作数弹栈
     node *n1 = vector_back(values), *n2 = NULL;
     vector_pop(values);
@@ -165,7 +166,7 @@ static void parse_node_push(struct vector *ops, struct vector *values, node *n)
 {
     // 比较优先级再决定是否入栈
     node *np = vector_back(ops);
-    if (np->value.sval.ttype == TOKEN_TYPE_SYMBOL && np->exp.symbol == '(') {
+    if (np->value.ttype == TOKEN_TYPE_SYMBOL && np->exp.symbol == '(') {
         vector_push(ops, n);
         return;
     }
@@ -173,19 +174,19 @@ static void parse_node_push(struct vector *ops, struct vector *values, node *n)
     if (n->exp.op && np->exp.op && operator_is_prioritized(n->exp.op, np->exp.op)) {
         vector_push(ops, n);
         return;
-    } else if (n->value.sval.ttype == TOKEN_TYPE_SYMBOL && np->value.sval.ttype != TOKEN_TYPE_SYMBOL) {
+    } else if (n->value.ttype == TOKEN_TYPE_SYMBOL && np->value.ttype != TOKEN_TYPE_SYMBOL) {
         char vn[2] = { n->exp.symbol, 0};
         if (operator_is_prioritized(vn, np->exp.op)) {
             vector_push(ops, n);
             return;
         }
-    } else if (n->value.sval.ttype != TOKEN_TYPE_SYMBOL && np->value.sval.ttype == TOKEN_TYPE_SYMBOL) {
+    } else if (n->value.ttype != TOKEN_TYPE_SYMBOL && np->value.ttype == TOKEN_TYPE_SYMBOL) {
         char vnp[2] = { np->exp.symbol, 0};
         if (operator_is_prioritized(n->exp.op, vnp)) {
             vector_push(ops, n);
             return;
         }
-    } else if (n->value.sval.ttype == TOKEN_TYPE_SYMBOL && np->value.sval.ttype == TOKEN_TYPE_SYMBOL) {
+    } else if (n->value.ttype == TOKEN_TYPE_SYMBOL && np->value.ttype == TOKEN_TYPE_SYMBOL) {
         char vn[2] = { n->exp.symbol, 0};
         char vnp[2] = { np->exp.symbol, 0};
         if (operator_is_prioritized(vn, vnp)) {
@@ -203,23 +204,23 @@ static void parse_node_push(struct vector *ops, struct vector *values, node *n)
 static void parse_expression_node(struct vector *ops, struct vector *values, node *n)
 {
     // 操作数直接入栈
-    if (n->value.sval.ttype != TOKEN_TYPE_OPERATOR && n->value.sval.ttype != TOKEN_TYPE_SYMBOL) {
+    if (n->value.ttype != TOKEN_TYPE_OPERATOR && n->value.ttype != TOKEN_TYPE_SYMBOL) {
         vector_push(values, n);
         return;
     }
 
     // 栈为空或者遇到左括号则直接入栈
-    if (vector_empty(ops) || (n->exp.symbol == '(' && n->value.sval.ttype == TOKEN_TYPE_SYMBOL)) {
+    if (vector_empty(ops) || (n->exp.symbol == '(' && n->value.ttype == TOKEN_TYPE_SYMBOL)) {
         vector_push(ops, n);
         return;
     }
 
     // 遇到右括号直接出栈直到遇到左括号
-    if (n->exp.symbol == ')' && n->value.sval.ttype == TOKEN_TYPE_SYMBOL) {
+    if (n->exp.symbol == ')' && n->value.ttype == TOKEN_TYPE_SYMBOL) {
         node *nt = NULL;
         while(true) {
             nt = vector_back(ops);
-            if (nt->value.sval.ttype == TOKEN_TYPE_SYMBOL && nt->exp.symbol == '(') {
+            if (nt->value.ttype == TOKEN_TYPE_SYMBOL && nt->exp.symbol == '(') {
                 vector_pop(ops);
                 return;
             }
@@ -259,18 +260,22 @@ int parse_daclare(struct vector *statement)
 {
     datatype *dtype = datatype_create();
     node *n = vector_peek_no_increment(statement);
+    char *var_name = NULL;
     while (n && n->type) {
         if (n->type == NODE_TYPE_DELIMITER) {
             vector_peek_pop(statement);
             break;
         }
-        switch (n->value.sval.ttype) {
+        switch (n->value.ttype) {
             case TOKEN_TYPE_KEYWORD:
                 datatype_parse_flags(n, dtype) || datatype_parse_type(n, dtype);
                 break;
-            case TOKEN_TYPE_IDENTIFIER:
-                datatype_set_name(n, dtype);
+            case TOKEN_TYPE_IDENTIFIER: {
+                size_t len_name = strlen(n->value.val);
+                var_name = malloc(len_name + 1);
+                strncpy(var_name, n->value.val, len_name);
                 break;
+            }
             default:
                 datatype_parse_array(n, dtype);
                 break;
@@ -280,7 +285,7 @@ int parse_daclare(struct vector *statement)
     }
     node_create(&(node){ 
         .type = NODE_TYPE_STATEMENT | NODE_TYPE_STATEMENT_DECLARE, 
-        .value.pval = dtype });
+        .var.type = dtype, .var.name = var_name });
     return JAVAC_PARSE_OK;
 }
 

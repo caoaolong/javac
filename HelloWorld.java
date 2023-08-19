@@ -1,1 +1,1 @@
-static final transient int i = a == b ? c : d;
+int i = 20;

@@ -11,13 +11,9 @@ typedef struct {
     } ifile;
     FILE *ofp;
     int flags;
-
     position pos;
-
-    struct {
-        struct vector *expressions;
-        struct vector *statements;
-    } ast;
+    
+    struct vector *nodes;
 } compile_process;
 
 compile_process* compile_process_create(const char *ifile, const char *ofile, int flags);

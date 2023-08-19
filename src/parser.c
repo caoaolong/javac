@@ -110,24 +110,19 @@ static bool is_declare_begin(token *tk)
         SEQ(tk->sval, "double") || SEQ(tk->sval, "float"));
 }
 
-static void attach_expression_to_declare(struct vector *exps, struct vector *stats)
+static void attach_expression_to_declare(struct vector *nodes)
 {
-    vector_save(stats);
-    
-    vector_set_peek_pointer_end(stats);
-    node *n = NULL;
-    while (true) {
-        n = vector_peek(stats);
-        if (n->type & NODE_TYPE_STATEMENT_DECLARE) {
-            if (!vector_empty(exps)) {
-                n->var.value = vector_back(exps);
-                vector_pop(exps);
-            }
-            break;
-        }
-    }
-
-    vector_restore(stats);
+    // expression value
+    node *exp = (node*)vector_back(nodes);
+    vector_pop(nodes);
+    // delimiter node
+    vector_pop(nodes);
+    // declare node
+    node *dec = (node*)vector_back(nodes);
+    vector_pop(nodes);
+    dec->var.value = exp;
+    vector_push(nodes, dec);
+    vector_set_peek_pointer_end(nodes);
 }
 
 static void parse_expression_node_pop(struct vector *ops, struct vector *values, node *n)
@@ -246,9 +241,11 @@ int parse_expression(struct vector *expression)
         n = vector_peek_no_increment(expression);
     }
     // 清空运算符栈
-    n = vector_back(ops);
-    while (vector_count(ops) > 0) {
-        parse_expression_node_pop(ops, values, n);
+    if (!vector_empty(ops)) {
+        n = vector_back(ops);
+        while (vector_count(ops) > 0) {
+            parse_expression_node_pop(ops, values, n);
+        }
     }
     vector_push(expression, vector_peek(values));
     vector_free(ops);
@@ -263,7 +260,6 @@ int parse_daclare(struct vector *statement)
     char *var_name = NULL;
     while (n && n->type) {
         if (n->type == NODE_TYPE_DELIMITER) {
-            vector_peek_pop(statement);
             break;
         }
         switch (n->value.ttype) {
@@ -291,7 +287,7 @@ int parse_daclare(struct vector *statement)
 
 int parse(lexer_process *process)
 {
-    node_set_vector(process->compiler->ast.expressions, process->compiler->ast.statements);
+    node_set_vector(process->compiler->nodes);
     // 解析toke列表
     bool exp = false, declare = false;
     token *elem = (token*)vector_peek(process->tokens);
@@ -300,22 +296,20 @@ int parse(lexer_process *process)
         if (is_expression_begin(elem)) {
             exp = true;
             declare = false;
-            node_push_delimiter(NODE_TYPE_STATEMENT);
             // parse declare statement
-            if (parse_daclare(process->compiler->ast.statements) != JAVAC_PARSE_OK)
+            if (parse_daclare(process->compiler->nodes) != JAVAC_PARSE_OK)
                 return JAVAC_PARSE_ERROR;
+            node_push_delimiter();
             elem ++;
             continue;
         } else if (elem->type == TOKEN_TYPE_SYMBOL && elem->cval == ';' && exp) {
-            node_push_delimiter(NODE_TYPE_EXPRESSION);
             exp = false;
             // parse expression
-            if (parse_expression(process->compiler->ast.expressions) != JAVAC_PARSE_OK)
+            if (parse_expression(process->compiler->nodes) != JAVAC_PARSE_OK)
                 return JAVAC_PARSE_ERROR;
             // attach the expression node to the value attribute of declare node
-            attach_expression_to_declare(
-                process->compiler->ast.expressions,
-                process->compiler->ast.statements);
+            attach_expression_to_declare(process->compiler->nodes);
+            node_push_delimiter();
             elem ++;
             continue;
         } else if (is_declare_begin(elem)) {

@@ -15,8 +15,7 @@ compile_process* compile_process_create(const char *ifile, const char *ofile, in
     process->ifile.ifp = ifp;
     process->ofp = ofp;
     process->pos.col = process->pos.line = 0;
-    process->ast.expressions = vector_create(sizeof(node));
-    process->ast.statements = vector_create(sizeof(node));
+    process->nodes = vector_create(sizeof(node));
     return process;
 }
 

@@ -65,13 +65,13 @@ struct node_t {
     } value;
 };
 
-void node_set_vector(struct vector *vec, struct vector *root_vec);
+void node_set_vector(struct vector *nodes_vec);
 
 node *node_create(struct node_t *node);
 void node_push(struct node_t *node);
-void node_push_delimiter(int type);
-node *node_pop(int type);
-node *node_peek(int type);
+void node_push_delimiter();
+node *node_pop();
+node *node_peek();
 
 void node_create_expression(lexer_process *process, token *tk);
 void node_create_declare(lexer_process *process, token *tk);

@@ -1,16 +1,14 @@
 #include "ast.h"
 
-struct vector *expression_vector = NULL;
-struct vector *statement_vector = NULL;
+struct vector *nodes_vec = NULL;
 
 static struct node_t delimiter = {
     .type = NODE_TYPE_DELIMITER
 };
 
-void node_set_vector(struct vector *expression_vec, struct vector *statement_vec)
+void node_set_vector(struct vector *vec)
 {
-    expression_vector = expression_vec;
-    statement_vector = statement_vec;
+    nodes_vec = vec;
 }
 
 node *node_create(struct node_t *node)
@@ -25,28 +23,19 @@ void node_push(struct node_t *node)
 {
     if (!node)
         return;
-
-    if (node->type == NODE_TYPE_EXPRESSION)
-        vector_push(expression_vector, node);
-    else if (node->type & NODE_TYPE_STATEMENT)
-        vector_push(statement_vector, node);
+    vector_push(nodes_vec, node);
 }
 
-void node_push_delimiter(int type)
+void node_push_delimiter()
 {
-    if (type == NODE_TYPE_EXPRESSION)
-        vector_push(expression_vector, &delimiter);
-    else if (type == NODE_TYPE_STATEMENT)
-        vector_push(statement_vector, &delimiter);
+    vector_push(nodes_vec, &delimiter);
+    vector_set_peek_pointer(nodes_vec, vector_count(nodes_vec));
 }
 
-node *node_pop(int type)
+node *node_pop()
 {
     struct vector *node_vector = NULL;
-    if (type == NODE_TYPE_EXPRESSION)
-        node_vector = expression_vector;
-    else if (type & NODE_TYPE_STATEMENT)
-        node_vector = statement_vector;
+    node_vector = nodes_vec;
 
     if (vector_empty(node_vector))
         return NULL;
@@ -55,14 +44,9 @@ node *node_pop(int type)
     return node;
 }
 
-node *node_peek(int type)
+node *node_peek()
 {
-    if (type == NODE_TYPE_EXPRESSION)
-        return (node *)vector_back(expression_vector);
-    else if (type & NODE_TYPE_STATEMENT)
-        return (node *)vector_back(statement_vector);
-
-    return NULL;
+    return (node *)vector_back(nodes_vec);;
 }
 
 void node_create_expression(lexer_process *process, token *tk)

@@ -22,7 +22,7 @@ static bool is_keyword(const char *value)
         || SEQ(value, "try") || SEQ(value, "catch") || SEQ(value, "finally") || SEQ(value, "throw")
         || SEQ(value, "instanceof") || SEQ(value, "default") || SEQ(value, "package") 
         || SEQ(value, "const") || SEQ(value, "native") || SEQ(value, "goto") || SEQ(value, "strictfp")
-        || SEQ(value, "return")|| SEQ(value, "transient");
+        || SEQ(value, "return") || SEQ(value, "transient") || SEQ(value, "new");
 }
 
 static bool is_character(struct buffer *buffer, int size)

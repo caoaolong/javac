@@ -121,6 +121,11 @@ node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct n
     return np;
 }
 
+#define CONVERT_CVAL_SVAL(tk)   \
+    char *sym_str = malloc(2); \
+    sym_str[0] = (tk)->cval; \
+    sym_str[1] = 0
+
 void node_create_declare(lexer_process *process, token *tk)
 {
     node *n = NULL;
@@ -132,5 +137,32 @@ void node_create_declare(lexer_process *process, token *tk)
                     .value = { .val = tk->sval, .ttype = tk->type }, 
                     .type = NODE_TYPE_STATEMENT });
             break;
+        case TOKEN_TYPE_SYMBOL: {
+            CONVERT_CVAL_SVAL(tk);
+            n = node_create(&(node){
+                    .value = { .val = sym_str, .ttype = tk->type }, 
+                    .type = NODE_TYPE_STATEMENT });
+            break;
+        }
+    }
+}
+
+void node_create_new(lexer_process *process, token *tk)
+{
+    node *n = NULL;
+    switch (tk->type) {
+        case TOKEN_TYPE_KEYWORD: {
+            n = node_create(&(node){
+                    .value = { .val = tk->sval, .ttype = tk->type }, 
+                    .type = NODE_TYPE_STATEMENT | NODE_TYPE_STATEMENT_NEW });
+            break;
+        }
+        case TOKEN_TYPE_SYMBOL: {
+            CONVERT_CVAL_SVAL(tk);
+            n = node_create(&(node){
+                    .value = { .val = sym_str, .ttype = tk->type }, 
+                    .type = NODE_TYPE_STATEMENT });
+            break;
+        }
     }
 }

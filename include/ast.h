@@ -26,7 +26,8 @@ enum
     NODE_TYPE_STATEMENT_DECLARE     = 0b00000010,
     NODE_TYPE_STATEMENT_STRUCT      = 0b00000100,
     NODE_TYPE_STATEMENT_BODY        = 0b00001000,
-    NODE_TYPE_STATEMENT_FUNCTION    = 0b00010000
+    NODE_TYPE_STATEMENT_FUNCTION    = 0b00010000,
+    NODE_TYPE_STATEMENT_NEW         = 0b00100000
 };
 
 typedef struct node_t node;
@@ -53,11 +54,23 @@ struct node_t {
                 struct node_t *alternate;
             } test;
         } exp;
+        // declare
         struct {
             struct datatype_t *type;
             const char *name;
             struct node_t *value;
         } var;
+        // new
+        struct {
+            union {
+                // new array
+                struct {
+                    size_t dim;
+                    struct node_t *type;
+                    struct vector *values;
+                } array;
+            };
+        } new;
     };
     struct {
         int ttype;
@@ -75,6 +88,7 @@ node *node_peek();
 
 void node_create_expression(lexer_process *process, token *tk);
 void node_create_declare(lexer_process *process, token *tk);
+void node_create_new(lexer_process *process, token *tk);
 node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct node_t *np);
 
 #endif

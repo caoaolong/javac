@@ -40,6 +40,9 @@ struct datatype_t {
     int flags;
     int type;
     int size;
+    struct {
+        size_t dim;
+    } array;
 };
 
 int parse(lexer_process *process);

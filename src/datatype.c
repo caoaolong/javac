@@ -7,23 +7,6 @@ datatype *datatype_create()
     return dt;
 }
 
-bool datatype_parse_array(node *n, datatype *dtype)
-{
-    static bool array = false;
-    if (n->value.ttype == TOKEN_TYPE_SYMBOL) {
-        if (SEQ(n->value.val, "["))
-            array = true;
-        else if (SEQ(n->value.val, "]") && array)
-            array = false;
-    } else if (n->value.ttype == TOKEN_TYPE_NUMBER && array) {
-        long array_length = strtol(n->value.val, NULL, 10);
-        dtype->size = dtype->size * array_length;
-    } else 
-        return false;
-
-    return true;
-}
-
 bool datatype_parse_flags(node *n, datatype *dtype)
 {
     if (n->value.ttype != TOKEN_TYPE_KEYWORD) 

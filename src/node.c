@@ -85,27 +85,38 @@ node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct n
         ec3node.type = NODE_TYPE_EXPRESSION;
         ec3node.exp.left = n2->exp.left;
         ec3node.exp.right = n2->exp.right;
-        ec3node.exp.test.consequent = n1;
+        struct node_t *nn1 = calloc(1, sizeof(struct node_t));
+        memcpy(nn1, n1, sizeof(struct node_t));
+        ec3node.exp.test.consequent = nn1;
         return np;
     }
 
     if (np->exp.symbol == ':') {
-        ec3node.exp.test.alternate = n1;
+        struct node_t *nn1 = calloc(1, sizeof(struct node_t));
+        memcpy(nn1, n1, sizeof(struct node_t));
+        ec3node.exp.test.alternate = nn1;
         struct node_t *nnp = calloc(1, sizeof(struct node_t));
         memcpy(nnp, &ec3node, sizeof(struct node_t));
         memset(&ec3node, 0, sizeof(node));
         return nnp;
     }
 
-    if (!np->exp.opp)
-        return np;
-    
-    if (np->exp.opp->order == OPERATOR_PRECEDENCE_LEFT_TO_RIGHT) {
-        np->exp.right = n1;
-        if (n2) np->exp.left = n2;
-    } else if (np->exp.opp->order == OPERATOR_PRECEDENCE_RIGHT_TO_LEFT) {
-        np->exp.left = n1;
-        if (n2) np->exp.right = n2;
+    struct node_t *nn1 = calloc(1, sizeof(struct node_t)), *nn2 = NULL;
+    memcpy(nn1, n1, sizeof(struct node_t));
+    if (n2) {
+        nn2 = calloc(1, sizeof(struct node_t));
+        memcpy(nn2, n2, sizeof(struct node_t));
+    }
+    if (np->exp.opp) {
+        if (np->exp.opp->order == OPERATOR_PRECEDENCE_LEFT_TO_RIGHT) {
+            if (nn2) 
+                np->exp.left = nn2;
+            np->exp.right = nn1;
+        } else if (np->exp.opp->order == OPERATOR_PRECEDENCE_RIGHT_TO_LEFT) {
+            np->exp.left = nn1;
+            if (nn2)
+                np->exp.right = nn2;
+        }
     }
     return np;
 }

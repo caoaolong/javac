@@ -22,12 +22,13 @@ enum
     NODE_TYPE_EXPRESSION = 0x10,
     NODE_TYPE_DELIMITER,
     // STATEMENT
-    NODE_TYPE_STATEMENT             = 0b00000001,
-    NODE_TYPE_STATEMENT_DECLARE     = 0b00000010,
-    NODE_TYPE_STATEMENT_STRUCT      = 0b00000100,
-    NODE_TYPE_STATEMENT_BODY        = 0b00001000,
-    NODE_TYPE_STATEMENT_FUNCTION    = 0b00010000,
-    NODE_TYPE_STATEMENT_NEW         = 0b00100000
+    NODE_TYPE_STATEMENT                  = 0b00000001,
+    NODE_TYPE_STATEMENT_DECLARE          = 0b00000010,
+    NODE_TYPE_STATEMENT_DECLARE_LIST     = 0b00000100,
+    NODE_TYPE_STATEMENT_STRUCT           = 0b00001000,
+    NODE_TYPE_STATEMENT_BODY             = 0b00010000,
+    NODE_TYPE_STATEMENT_FUNCTION         = 0b00100000,
+    NODE_TYPE_STATEMENT_NEW              = 0b01000000
 };
 
 typedef struct node_t node;
@@ -60,6 +61,10 @@ struct node_t {
             const char *name;
             struct node_t *value;
         } var;
+        // declare list
+        struct {
+            struct vector *list;
+        } varlist;
         // new
         struct {
             union {

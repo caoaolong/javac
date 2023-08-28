@@ -117,7 +117,7 @@ static bool is_new_begin(token *tk)
     return tk->type == TOKEN_TYPE_KEYWORD && SEQ(tk->sval, "new");
 }
 
-static void attach_expression_to_declare(struct vector *nodes)
+static void attach_expression_to_declare(struct vector *nodes, bool comma)
 {
     // expression value
     node *exp = (node*)vector_back(nodes);
@@ -126,9 +126,17 @@ static void attach_expression_to_declare(struct vector *nodes)
     vector_pop(nodes);
     // declare node
     node *dec = (node*)vector_back(nodes);
-    vector_pop(nodes);
-    dec->var.value = exp;
-    vector_push(nodes, dec);
+    if (comma) {
+        if (!(dec->type & NODE_TYPE_STATEMENT_DECLARE_LIST)) {
+            compile_error(current_process, "错误的声明\n");
+        }
+        ((node*)vector_back(dec->varlist.list))->var.value = exp;
+    } else {
+        if (!(dec->type & NODE_TYPE_STATEMENT_DECLARE)) {
+            compile_error(current_process, "错误的声明\n");
+        }
+        dec->var.value = exp;
+    }
     vector_set_peek_pointer_end(nodes);
 }
 
@@ -302,8 +310,41 @@ int parse_expression(struct vector *expression)
 
 #define DECLARE_ERROR   compile_error(current_process, "错误的声明格式\n")
 
-int parse_daclare(struct vector *statement) 
+int parse_declare_list(struct vector *statement)
 {
+    // pop new declare identifier
+    node *nn = vector_back(statement);
+    vector_pop(statement);
+    // pop delimiter node
+    vector_pop(statement);
+    // pop original declare node
+    node *nvar = vector_back(statement);
+    node *nlist = NULL;
+    // create new var list node or get var list node
+    if (!(nvar->type & NODE_TYPE_STATEMENT_DECLARE_LIST)) {
+        vector_pop(statement);
+        nlist = node_create(&(node){
+            .type = NODE_TYPE_STATEMENT | NODE_TYPE_STATEMENT_DECLARE_LIST,
+            .varlist = vector_create(sizeof(node))
+        });
+        vector_push(nlist->varlist.list, nvar);
+    } else {
+        nlist = vector_back(statement);
+    }
+    node nnn;
+    nnn.type = NODE_TYPE_STATEMENT | NODE_TYPE_STATEMENT_DECLARE;
+    nnn.var.name = nn->value.val;
+    nnn.var.type = ((node*)vector_peek_no_increment(nlist->varlist.list))->var.type;
+    vector_push(nlist->varlist.list, &nnn);
+    return JAVAC_PARSE_OK;
+}
+
+int parse_daclare(struct vector *statement, bool comma) 
+{
+    if (comma) {
+        return parse_declare_list(statement);
+    }
+
     datatype *dtype = datatype_create();
     node *n = vector_peek_no_increment(statement);
     char *var_name = NULL;
@@ -361,7 +402,7 @@ int parse(lexer_process *process)
     current_process = process->compiler;
     node_set_vector(process->compiler->nodes);
     // 解析toke列表
-    bool exp = false, declare = false, new = false, array = false;
+    bool exp = false, declare = false, new = false, array = false, comma = false;
     token *elem = (token*)vector_peek(process->tokens);
     // 区分Expression和Statement
     while(elem && elem->type) {
@@ -372,14 +413,13 @@ int parse(lexer_process *process)
             } else {
                 exp = true;
             }
-            declare = false;
             // parse declare statement
-            if (parse_daclare(process->compiler->nodes) != JAVAC_PARSE_OK)
+            if (parse_daclare(process->compiler->nodes, comma) != JAVAC_PARSE_OK)
                 return JAVAC_PARSE_ERROR;
             node_push_delimiter();
             elem = (token*)vector_peek(process->tokens);
             continue;
-        } else if (elem->type == TOKEN_TYPE_SYMBOL && ((elem->cval == ']' && array && new) || elem->cval == ';')) {
+        } else if (elem->type == TOKEN_TYPE_SYMBOL && ((elem->cval == ']' && array && new) || elem->cval == ';' || elem->cval == ',')) {
             if (exp) {
                 exp = false;
                 // parse expression
@@ -387,7 +427,7 @@ int parse(lexer_process *process)
                     return JAVAC_PARSE_ERROR;
                 if (declare) {
                     // attach the expression node to the value attribute of declare node
-                    attach_expression_to_declare(process->compiler->nodes);
+                    attach_expression_to_declare(process->compiler->nodes, comma);
                 } else if (new && array) {
                     // attach the expression node to the values attribute of array node
                     attach_expression_to_array(process->compiler->nodes);
@@ -399,6 +439,13 @@ int parse(lexer_process *process)
                     return JAVAC_PARSE_ERROR;
                 // attach the new node to the value attribute of declare node
                 attach_new_to_declare(process->compiler->nodes);
+            }
+            if (elem->cval == ',') {
+                new = array = exp = false;
+                declare = true;
+                comma = true;
+            } else if (elem->cval == ';') {
+                comma = false;
             }
             node_push_delimiter();
             elem = (token*)vector_peek(process->tokens);

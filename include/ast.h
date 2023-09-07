@@ -10,13 +10,6 @@ enum
     OPERATOR_PRECEDENCE_RIGHT_TO_LEFT
 };
 
-typedef struct {
-    const char *operator;
-    int order;
-    int precedence;
-    int ec;
-} operator_precedence;
-
 enum
 {
     NODE_TYPE_EXPRESSION = 0x10,
@@ -29,58 +22,6 @@ enum
     NODE_TYPE_STATEMENT_BODY             = 0b00010000,
     NODE_TYPE_STATEMENT_FUNCTION         = 0b00100000,
     NODE_TYPE_STATEMENT_NEW              = 0b01000000
-};
-
-typedef struct node_t node;
-typedef struct datatype_t datatype;
-
-struct node_t {
-    int type;
-    position pos;
-    struct {
-        struct node_t *owner;
-        struct node_t *function;
-    } bind;
-    union {
-        // 算数运算表达式结构
-        struct {
-            struct node_t *left;
-            struct node_t *right;
-            const char *op;
-            const char symbol;
-            operator_precedence *opp;
-            // 三目运算
-            struct {
-                struct node_t *consequent;
-                struct node_t *alternate;
-            } test;
-        } exp;
-        // declare
-        struct {
-            struct datatype_t *type;
-            const char *name;
-            struct node_t *value;
-        } var;
-        // declare list
-        struct {
-            struct vector *list;
-        } varlist;
-        // new
-        struct {
-            union {
-                // new array
-                struct {
-                    size_t dim;
-                    struct node_t *type;
-                    struct vector *values;
-                } array;
-            };
-        } new;
-    };
-    struct {
-        int ttype;
-        const char *val;
-    } value;
 };
 
 void node_set_vector(struct vector *nodes_vec);

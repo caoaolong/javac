@@ -67,6 +67,18 @@ bool datatype_parse_type(node *n, datatype* dtype)
     } else if (SEQ(n->value.val, "boolean")) {
         dtype->type = DATA_TYPE_BOOLEAN;
         dtype->size = 1;
+    } else if (SEQ(n->value.val, "class")) {
+        dtype->type = DATA_TYPE_CLASS;
+        dtype->size = 0;
+    } else if (SEQ(n->value.val, "interface")) {
+        dtype->type = DATA_TYPE_CLASS;
+        dtype->size = 0;
+    } else if (SEQ(n->value.val, "enum")) {
+        dtype->type = DATA_TYPE_CLASS;
+        dtype->size = 0;
+    } else if (SEQ(n->value.val, "@interface")) {
+        dtype->type = DATA_TYPE_CLASS;
+        dtype->size = 0;
     } else
         return false;
 

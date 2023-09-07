@@ -35,7 +35,7 @@ enum
     DATA_TYPE_ENUM,
     DATA_TYPE_ANNOTATION
 };
-
+typedef struct datatype_t datatype;
 struct datatype_t {
     int flags;
     int type;

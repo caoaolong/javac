@@ -57,6 +57,9 @@ static operator_precedence op_precedence[] = {
     {.operator = "|=", .ec = 2, .order = OPERATOR_PRECEDENCE_RIGHT_TO_LEFT, .precedence = 13}
 };
 
+scope *current_scope;
+struct vector *scope_stack;
+
 static compile_process *current_process;
 
 static bool operator_is_prioritized(const char *op1, const char *op2)
@@ -115,6 +118,24 @@ static bool is_declare_begin(token *tk)
 static bool is_new_begin(token *tk)
 {
     return tk->type == TOKEN_TYPE_KEYWORD && SEQ(tk->sval, "new");
+}
+
+static void attach_body_to_declare(struct vector *nodes)
+{
+    // declare node
+    node *nd = vector_back(nodes);
+    scope *s = scope_new(current_process, nd->var.name);
+    nd->var.body = s;
+}
+
+static void attach_body_to_declare_finish()
+{
+    if (vector_empty(scope_stack)) {
+        compile_error(current_process, "没有正确结束的域");
+    }
+    vector_pop(scope_stack);
+    scope *s = vector_back_ptr(scope_stack);
+    current_scope = s;
 }
 
 static void attach_expression_to_declare(struct vector *nodes, bool comma)
@@ -452,8 +473,20 @@ int parse(lexer_process *process)
             continue;
         } else if (is_declare_begin(elem) && !new) {
             declare = true;
+        } else if (elem->type == TOKEN_TYPE_SYMBOL && elem->cval == '{') {
+            // parse declare statement
+            if (parse_daclare(process->compiler->nodes, comma) != JAVAC_PARSE_OK)
+                return JAVAC_PARSE_ERROR;
+            // attach the scope node to the body attribute of the declare node 
+            attach_body_to_declare(process->compiler->nodes);
+            elem = (token*)vector_peek(process->tokens);
+            continue;
+        } else if (elem->type == TOKEN_TYPE_SYMBOL && elem->cval == '}') {
+            attach_body_to_declare_finish();
+            elem = (token*)vector_peek(process->tokens);
+            continue;
         }
-        
+
         if (exp) {
             node_create_expression(process, elem);
         } else if (declare) {

@@ -45,6 +45,11 @@ struct datatype_t {
     } array;
 };
 
+int parse_daclare(struct vector *statement, bool comma);
+int parse_declare_list(struct vector *statement);
+int parse_new(struct vector *vec);
+int parse_expression(struct vector *expression);
+void parse_function_args(struct vector *args, struct vector *statement);
 int parse(lexer_process *process);
 
 datatype *datatype_create();

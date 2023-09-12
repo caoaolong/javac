@@ -38,6 +38,7 @@ struct node_t {
             const char *name;
             struct node_t *value;
             struct scope_t *body;
+            struct vector *args;
         } var;
         // declare list
         struct {

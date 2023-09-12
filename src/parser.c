@@ -360,16 +360,37 @@ int parse_declare_list(struct vector *statement)
     return JAVAC_PARSE_OK;
 }
 
+void parse_function_args(struct vector *args, struct vector *statement)
+{
+    node *n = vector_peek_no_increment(statement);
+    while (n && n->type) {
+        if (n->value.ttype == TOKEN_TYPE_SYMBOL && SEQ(n->value.val, ")")) {
+            node_set_vector(args);
+            parse_daclare(args, false);
+            node_set_vector(statement);
+            break;
+        } else if (n->value.ttype == TOKEN_TYPE_SYMBOL && SEQ(n->value.val, ",")) {
+            node_set_vector(args);
+            parse_daclare(args, false);
+            node_set_vector(statement);
+        }
+        vector_push(args, n);
+        vector_peek_pop(statement);
+        n = vector_peek_no_increment(statement);
+    }
+}
+
 int parse_daclare(struct vector *statement, bool comma) 
 {
     if (comma) {
         return parse_declare_list(statement);
     }
 
+    struct vector *args = NULL;
     datatype *dtype = datatype_create();
     node *n = vector_peek_no_increment(statement);
     char *var_name = NULL;
-    bool typed = false, identified = false;
+    bool typed = false, identified = false, func = false;
     while (n && n->type) {
         if (n->type == NODE_TYPE_DELIMITER) {
             break;
@@ -392,13 +413,21 @@ int parse_daclare(struct vector *statement, bool comma)
                 } else DECLARE_ERROR;
                 break;
             }
-            default: {
-                if ((typed || identified) && (SEQ(n->value.val, "[") && n->value.ttype == TOKEN_TYPE_SYMBOL)) {
+            case TOKEN_TYPE_SYMBOL: {
+                // 解析数组
+                if ((typed || identified) && SEQ(n->value.val, "[")) {
                     vector_peek_pop(statement);
                     node *nn = vector_peek_no_increment(statement);
                     if (SEQ(nn->value.val, "]") && nn->value.ttype == TOKEN_TYPE_SYMBOL) {
                         dtype->array.dim ++;
                     }
+                // 解析函数的参数列表
+                } else if ((typed || identified) && SEQ(n->value.val, "(")) {
+                    func = true;
+                    vector_peek_pop(statement);
+                    // 解析参数列表
+                    args = vector_create(sizeof(node));
+                    parse_function_args(args, statement);
                 } else DECLARE_ERROR;
                 break;
             }
@@ -406,9 +435,14 @@ int parse_daclare(struct vector *statement, bool comma)
         vector_peek_pop(statement);
         n = vector_peek_no_increment(statement);
     }
+    int node_type = NODE_TYPE_STATEMENT | NODE_TYPE_STATEMENT_DECLARE;
+    if (func) {
+        node_type |= NODE_TYPE_STATEMENT_FUNCTION;
+    }
     node_create(&(node){ 
-        .type = NODE_TYPE_STATEMENT | NODE_TYPE_STATEMENT_DECLARE, 
-        .var.type = dtype, .var.name = var_name });
+        .type = node_type,  .var.type = dtype, 
+        .var.name = var_name, .var.args = args 
+    });
     return JAVAC_PARSE_OK;
 }
 

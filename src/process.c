@@ -64,6 +64,7 @@ scope *scope_new(compile_process *process, const char *name) {
     s->parent = current_scope;
     current_scope = s;
     process->nodes = current_scope->statements;
+    node_set_vector(process->nodes);
     vector_push(process->scopes, s);
     if (!scope_stack) {
         scope_stack = vector_create(sizeof(scope*));

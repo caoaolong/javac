@@ -10,10 +10,10 @@ loader* loader_create()
     return class_loader;
 }
 
-void loader_init(loader *class_loader, const char *classpath)
+void loader_load(loader *class_loader, const char *prefix)
 {
     char buffer[1024];
-    zip_t *zip = zip_open(classpath, 0, NULL);
+    zip_t *zip = zip_open(class_loader->path, 0, NULL);
     if (zip == NULL) {
         return;
     }
@@ -25,11 +25,17 @@ void loader_init(loader *class_loader, const char *classpath)
         if (!strendswith(filename, ".class")) {
             continue;
         }
-        if (strstartswith(filename, "java/lang")) {
+        if (strstartswith(filename, prefix)) {
             loader_append_entry(class_loader, filename);
         }
     }
     zip_close(zip);
+}
+
+void loader_init(loader *class_loader, const char *classpath)
+{
+    class_loader->path = classpath;
+    loader_load(class_loader, "java/lang/");
 }
 
 void loader_append_entry(loader *class_loader, const char *name)

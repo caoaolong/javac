@@ -21,7 +21,8 @@ enum
     NODE_TYPE_STATEMENT_STRUCT           = 0b00001000,
     NODE_TYPE_STATEMENT_BODY             = 0b00010000,
     NODE_TYPE_STATEMENT_FUNCTION         = 0b00100000,
-    NODE_TYPE_STATEMENT_NEW              = 0b01000000
+    NODE_TYPE_STATEMENT_NEW              = 0b01000000,
+    NODE_TYPE_STATEMENT_IMPORT           = 0b10000000
 };
 
 void node_set_vector(struct vector *nodes_vec);
@@ -35,6 +36,7 @@ node *node_peek();
 void node_create_expression(lexer_process *process, token *tk);
 void node_create_declare(lexer_process *process, token *tk);
 void node_create_new(lexer_process *process, token *tk);
+void node_create_import(lexer_process *process, token *tk);
 node *node_create_expression_tree(struct node_t *n1, struct node_t *n2, struct node_t *np);
 
 #endif

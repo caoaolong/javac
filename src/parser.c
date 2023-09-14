@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "loader.h"
 #include <stddef.h>
 
 #define OPERATOR_SIZE   34
@@ -118,6 +119,11 @@ static bool is_declare_begin(token *tk)
 static bool is_new_begin(token *tk)
 {
     return tk->type == TOKEN_TYPE_KEYWORD && SEQ(tk->sval, "new");
+}
+
+static bool is_import_begin(token *tk)
+{
+    return tk->type == TOKEN_TYPE_KEYWORD && SEQ(tk->sval, "import");
 }
 
 static void attach_body_to_declare(struct vector *nodes)
@@ -380,6 +386,44 @@ void parse_function_args(struct vector *args, struct vector *statement)
     }
 }
 
+int parse_import(struct vector *statement)
+{
+    struct buffer *package = buffer_create();
+    struct vector *vec = vector_create(sizeof(node));
+    node *n = vector_back(statement);
+    while (true) {
+        if (n->type & NODE_TYPE_STATEMENT_IMPORT) {
+            vector_pop(statement);
+            break;
+        }
+        vector_push(vec, n);
+        vector_pop(statement);
+        n = vector_back(statement);
+    }
+    n = vector_back(vec);
+    while (true) {
+        switch (n->value.ttype) {
+            case TOKEN_TYPE_IDENTIFIER:
+                for (int i = 0; i < strlen(n->value.val); i++) {
+                    buffer_write(package, n->value.val[i]);
+                }
+                break;
+            case TOKEN_TYPE_SYMBOL:
+                if (SEQ(n->value.val, ".")) {
+                    buffer_write(package, '/');
+                }
+        }
+        vector_pop(vec);
+        if (vector_empty(vec)) break;
+        n = vector_back(vec);
+    }
+    if (package) {
+        loader_load(current_process->class_loader, (char*)buffer_ptr(package));
+    }
+    vector_free(vec);
+    return JAVAC_PARSE_OK;
+}
+
 int parse_daclare(struct vector *statement, bool comma) 
 {
     if (comma) {
@@ -459,7 +503,7 @@ int parse(lexer_process *process)
     current_process = process->compiler;
     node_set_vector(process->compiler->nodes);
     // 解析toke列表
-    bool exp = false, declare = false, new = false, array = false, comma = false;
+    bool exp = false, declare = false, new = false, array = false, comma = false, import = false;
     token *elem = (token*)vector_peek(process->tokens);
     // 区分Expression和Statement
     while(elem && elem->type) {
@@ -503,6 +547,10 @@ int parse(lexer_process *process)
                 comma = true;
             } else if (elem->cval == ';') {
                 comma = false;
+                if (import) {
+                    parse_import(process->compiler->nodes);
+                    import = false;
+                }
             }
             node_push_delimiter();
             elem = (token*)vector_peek(process->tokens);
@@ -521,8 +569,10 @@ int parse(lexer_process *process)
             attach_body_to_declare_finish();
             elem = (token*)vector_peek(process->tokens);
             continue;
+        } else if (is_import_begin(elem)) {
+            import = true;
         }
-
+        
         if (exp) {
             node_create_expression(process, elem);
         } else if (declare) {
@@ -534,6 +584,8 @@ int parse(lexer_process *process)
                 array = true;
                 node_push_delimiter();
             }
+        } else if (import) {
+            node_create_import(process, elem);
         }
         elem = (token*)vector_peek(process->tokens);
     }

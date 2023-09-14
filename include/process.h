@@ -56,6 +56,9 @@ struct node_t {
                 } array;
             };
         } new;
+        struct {
+            struct vector *list;
+        } import;
     };
     struct {
         int ttype;

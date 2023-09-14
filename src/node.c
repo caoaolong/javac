@@ -166,3 +166,38 @@ void node_create_new(lexer_process *process, token *tk)
         }
     }
 }
+
+void node_create_import(lexer_process *process, token *tk)
+{
+    node *n = NULL;
+    switch (tk->type) {
+        case TOKEN_TYPE_KEYWORD:
+            n = node_create(&(node){.value = { 
+                .val = tk->sval, .ttype = tk->type }, 
+                .type = NODE_TYPE_STATEMENT | NODE_TYPE_STATEMENT_IMPORT,
+                .import.list = vector_create(sizeof(void*)) });
+            break;
+        case TOKEN_TYPE_IDENTIFIER:
+            n = node_create(&(node){.value = { 
+                .val = tk->sval, .ttype = tk->type }, 
+                .type = NODE_TYPE_STATEMENT});
+            break;
+        case TOKEN_TYPE_SYMBOL:
+            if (tk->cval == '.') {
+                CONVERT_CVAL_SVAL(tk);
+                n = node_create(&(node){.value = { 
+                    .val = sym_str, .ttype = tk->type }, 
+                    .type = NODE_TYPE_STATEMENT});
+                ;
+            }
+            break;
+        case TOKEN_TYPE_OPERATOR:
+            if (SEQ(tk->sval, "*")) {
+                n = node_create(&(node){.value = { 
+                    .val = tk->sval, .ttype = tk->type }, 
+                    .type = NODE_TYPE_STATEMENT});
+                ;
+            }
+            break;
+    }
+}

@@ -5,6 +5,8 @@
 #include "helpers/vector.h"
 #include <string.h>
 
+#define CLASSPATH       "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/rt.jar"
+
 #define SEQ(s1, s2)     ((s1) && (s2) && !strcmp((s1), (s2)))
 
 #define CASE_SPACE      \
@@ -64,5 +66,8 @@ typedef struct {
 } position;
 
 int compile_file(const char *ifile, const char *ofile, int flags);
+
+bool strendswith(const char *str, const char *suffix);
+bool strstartswith(const char *str, const char *prefix);
 
 #endif

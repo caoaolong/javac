@@ -3,7 +3,7 @@
 
 #include "ast.h"
 #include "lexer.h"
-#include "helpers/vector.h"
+#include "loader.h"
 
 enum {
     DATATYPE_FLAG_ACCESS_PUBLIC     = 0b00000001,
@@ -57,5 +57,6 @@ datatype *datatype_create();
 bool datatype_parse_array(node *n, datatype *dtype);
 bool datatype_parse_flags(node *n, datatype* dtype);
 bool datatype_parse_type(node *n, datatype* dtype);
+bool datatype_parse_java_type(node *n, datatype* dtype, loader *class_loader);
 
 #endif

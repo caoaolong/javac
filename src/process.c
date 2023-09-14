@@ -1,5 +1,6 @@
 #include "process.h"
 #include "ast.h"
+#include "loader.h"
 #include <stdlib.h>
 #include <stdarg.h>
 
@@ -17,6 +18,10 @@ compile_process* compile_process_create(const char *ifile, const char *ofile, in
     process->pos.col = process->pos.line = 0;
     process->scopes = vector_create(sizeof(scope));
     process->root_scope = scope_new(process, "file");
+    // 初始化类加载器
+    loader *class_loader = loader_create();
+    loader_init(class_loader, CLASSPATH);
+    process->class_loader = class_loader;
     return process;
 }
 

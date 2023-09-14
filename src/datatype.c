@@ -1,5 +1,7 @@
 #include "parser.h"
 #include "token.h"
+#include "loader.h"
+#include <stdio.h>
 
 datatype *datatype_create()
 {
@@ -36,6 +38,20 @@ bool datatype_parse_flags(node *n, datatype *dtype)
         return false;
     
     return true;
+}
+
+bool datatype_parse_java_type(node *n, datatype* dtype, loader *class_loader)
+{
+    vector_set_peek_pointer(class_loader->class, 0);
+    struct buffer *name = vector_peek(class_loader->class);
+    while (name) {
+        if (strendswith(buffer_ptr(name), n->value.val)) {
+            n->value.val = buffer_ptr(name);
+            return true;
+        }
+        name = vector_peek(class_loader->class);
+    }
+    return false;
 }
 
 bool datatype_parse_type(node *n, datatype* dtype)
@@ -79,7 +95,7 @@ bool datatype_parse_type(node *n, datatype* dtype)
     } else if (SEQ(n->value.val, "@interface")) {
         dtype->type = DATA_TYPE_CLASS;
         dtype->size = 0;
-    } else
+    } else 
         return false;
 
     return true;

@@ -20,3 +20,13 @@ int compile_file(const char *ifile, const char *ofile, int flags)
     
     return JAVAC_OK;
 }
+
+bool strendswith(const char *str, const char *suffix)
+{
+    return strstr(str, suffix) == str + strlen(str) - strlen(suffix);
+}
+
+bool strstartswith(const char *str, const char *prefix)
+{
+    return strstr(str, prefix) == str;
+}

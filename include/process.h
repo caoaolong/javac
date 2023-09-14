@@ -2,6 +2,7 @@
 #define JAVAC_PROCESS_H
 
 #include "javac.h"
+#include "loader.h"
 
 typedef struct {
     const char *operator;
@@ -82,6 +83,7 @@ typedef struct {
     struct scope_t *root_scope;
     struct vector *scopes;
     struct vector *nodes;
+    loader *class_loader;
 } compile_process;
 
 compile_process* compile_process_create(const char *ifile, const char *ofile, int flags);

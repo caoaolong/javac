@@ -410,6 +410,8 @@ int parse_daclare(struct vector *statement, bool comma)
                     size_t len_name = strlen(n->value.val);
                     var_name = malloc(len_name + 1);
                     strncpy(var_name, n->value.val, len_name);
+                } else if (!typed && !identified) {
+                    typed = datatype_parse_java_type(n, dtype, current_process->class_loader);
                 } else DECLARE_ERROR;
                 break;
             }

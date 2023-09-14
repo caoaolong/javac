@@ -1,7 +1,8 @@
-INCLUDE = ./include
+INCLUDE = -I./include -I/opt/homebrew/include
+LIB = /opt/homebrew/lib
 SRC = ./src
 BUILD = ./build
-FLAG = -g -c -I$(INCLUDE)
+FLAG = -g -c $(INCLUDE)
 
 $(BUILD)/%.o: $(SRC)/%.c
 	$(shell mkdir -p $(dir $@))
@@ -16,9 +17,10 @@ all:$(BUILD)/helpers/buffer.o \
 	$(BUILD)/node.o \
 	$(BUILD)/datatype.o \
 	$(BUILD)/parser.o \
+	$(BUILD)/loader.o \
 	$(BUILD)/javac.o
-	gcc -g -I$(INCLUDE) main.c $^ -o ./javac
+	gcc -g $(INCLUDE) -L$(LIB) -lzip main.c $^ -o ./javac
 
 clean:
-	rm ./javac
+	rm -rf ./javac
 	rm -rf $(BUILD)

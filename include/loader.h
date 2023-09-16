@@ -58,6 +58,7 @@ typedef struct {
 } cp_info;
 
 typedef struct {
+    const char *name;
     int32_t magic;
     struct {
         int16_t minor;
@@ -70,6 +71,6 @@ typedef struct {
 loader *loader_create();
 void loader_init(loader *class_loader, const char *classpath);
 void loader_load(loader *class_loader, const char *prefix);
-void loader_append_entry(loader *class_loader, const char *name);
+void loader_append_entry(loader *class_loader, class *cls, const char *name);
 
 #endif

@@ -40,6 +40,7 @@ static void parse_class_version(class *cls, struct buffer *data)
 static void parse_class_constant_pool(class *cls, struct buffer *data)
 {
     cls->constant_pool_count = parse_read_int16(data);
+    cls->constant_pool = vector_create(sizeof(cp_info));
     cp_info ci = { 0 };
     for (int i = 0; i < cls->constant_pool_count - 1; i++) {
         ci.tag = buffer_read(data);
@@ -77,6 +78,7 @@ static void parse_class_constant_pool(class *cls, struct buffer *data)
                 ci.value.bit816.reference_index = parse_read_int16(data);
                 break;
         }
+        vector_push(cls->constant_pool, &ci);
     }
 }
 
@@ -88,7 +90,6 @@ static class* loader_parse(struct buffer *data)
     // 版本号
     parse_class_version(cls, data);
     // 常量池
-    cls->constant_pool = vector_create(sizeof(cp_info));
     parse_class_constant_pool(cls, data);
     return cls;
 }
@@ -114,7 +115,7 @@ static struct buffer* loader_read(zip_t *zip, const char *filename)
 loader* loader_create()
 {
     loader *class_loader = malloc(sizeof(loader));
-    class_loader->class = vector_create(sizeof(char*));
+    class_loader->class = vector_create(sizeof(class));
     return class_loader;
 }
 
@@ -134,10 +135,9 @@ void loader_load(loader *class_loader, const char *prefix)
             continue;
         }
         if (strstartswith(filename, prefix)) {
-            loader_append_entry(class_loader, filename);
             // 解析类
-            struct buffer* class = loader_read(zip, filename);
-            loader_parse(class);
+            loader_append_entry(class_loader, 
+                loader_parse(loader_read(zip, filename)), filename);
         }
     }
     zip_close(zip);
@@ -149,7 +149,7 @@ void loader_init(loader *class_loader, const char *classpath)
     loader_load(class_loader, "java/lang/");
 }
 
-void loader_append_entry(loader *class_loader, const char *name)
+void loader_append_entry(loader *class_loader, class *cls, const char *name)
 {
     struct buffer *buffer = buffer_create();
     for (int i = 0; i < strlen(name) - 6; i++) {
@@ -160,5 +160,6 @@ void loader_append_entry(loader *class_loader, const char *name)
         }
     }
     buffer_write(buffer, 0);
-    vector_push(class_loader->class, buffer);
+    cls->name = buffer_ptr(buffer);
+    vector_push(class_loader->class, cls);
 }

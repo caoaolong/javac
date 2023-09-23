@@ -42,7 +42,7 @@ static void parse_class_constant_pool(class *cls, struct buffer *data)
     cls->constant_pool_count = parse_read_int16(data);
     cls->constant_pool = vector_create(sizeof(cp_info));
     cp_info ci = { 0 };
-    for (int i = 0; i < cls->constant_pool_count - 1; i++) {
+    for (int i = 0; i < cls->constant_pool_count - 2; i++) {
         ci.tag = buffer_read(data);
         switch (ci.tag) {
             case CONSTANT_Class:
@@ -82,16 +82,98 @@ static void parse_class_constant_pool(class *cls, struct buffer *data)
     }
 }
 
+static void parse_class_interface(class *cls, struct buffer *data)
+{
+    cls->interfaces_count = parse_read_int16(data);
+    if (cls->interfaces_count > 0) {
+        cls->interfaces = malloc(sizeof(int16_t) * cls->interfaces_count);
+        for (int i = 0; i < cls->interfaces_count; i++) {
+            cls->interfaces[i] = parse_read_int16(data);
+        }
+    }
+}
+
+static struct vector *parse_class_attributes(struct buffer *data, int16_t count)
+{
+    if (count == 0) {
+        return NULL;
+    }
+
+    struct vector *vec = vector_create(sizeof(attribute_info));
+    attribute_info ai;
+    for (int i = 0; i < count; i++) {
+        ai.attribute_name_index = parse_read_int16(data);
+        ai.attribute_length = parse_read_int32(data);
+        if (ai.attribute_length > 0) {
+            ai.info = malloc(sizeof(int8_t) * ai.attribute_length);
+            for (int k = 0; k < ai.attribute_length; k ++) {
+                ai.info[k] = buffer_read(data);
+            }
+        }
+        vector_push(vec, &ai);
+    }
+    return vec;
+}
+
+static void parse_class_fields(class *cls, struct buffer *data)
+{
+    cls->fields_count = parse_read_int16(data);
+    cls->fields = vector_create(sizeof(field_info));
+    field_info fi;
+    for (int i = 0; i < cls->fields_count; i++) {
+        fi.access_flags = parse_read_int16(data);
+        fi.name_index = parse_read_int16(data);
+        fi.descriptor_index = parse_read_int16(data);
+        fi.attributes_count = parse_read_int16(data);
+        if (fi.attributes_count > 0) {
+            fi.attributes = parse_class_attributes(data, fi.attributes_count);
+        }
+        vector_push(cls->fields, &fi);
+    }
+}
+
+static void parse_class_methods(class *cls, struct buffer *data)
+{
+    cls->methods_count = parse_read_int16(data);
+    cls->methods = vector_create(sizeof(field_info));
+    method_info mi;
+    for (int i = 0; i < cls->methods_count; i++) {
+        mi.access_flags = parse_read_int16(data);
+        mi.name_index = parse_read_int16(data);
+        mi.descriptor_index = parse_read_int16(data);
+        mi.attributes_count = parse_read_int16(data);
+        if (mi.attributes_count > 0) {
+            mi.attributes = parse_class_attributes(data, mi.attributes_count);
+        }
+        vector_push(cls->methods, &mi);
+    }
+}
+
 static class* loader_parse(struct buffer *data) 
 {
     class *cls = malloc(sizeof(class));
-    // 魔数
+    // magic
     cls->magic = parse_read_int32(data);
-    // 版本号
+    // version number
     parse_class_version(cls, data);
-    // 常量池
+    // constant pool
     parse_class_constant_pool(cls, data);
-    return cls;
+    // access flags
+    cls->accss_flags = parse_read_int16(data);
+    // this class
+    cls->this_class = parse_read_int16(data);
+    // super class
+    cls->super_class = parse_read_int16(data);
+    // interfaces
+    parse_class_interface(cls, data);
+    // fields
+    parse_class_fields(cls, data);
+    // methods
+    parse_class_methods(cls, data);
+    // attributes
+    cls->attributes_count = parse_read_int16(data);
+    cls->attributes = parse_class_attributes(data, cls->attributes_count);
+    return data->len == data->rindex ? cls : NULL;
 }
 
 static struct buffer* loader_read(zip_t *zip, const char *filename)

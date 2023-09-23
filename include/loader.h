@@ -58,6 +58,22 @@ typedef struct {
 } cp_info;
 
 typedef struct {
+    int16_t attribute_name_index;
+    int16_t attribute_length;
+    int8_t *info;
+} attribute_info;
+
+typedef struct {
+    int16_t access_flags;
+    int16_t name_index;
+    int16_t descriptor_index;
+    int16_t attributes_count;
+    struct vector *attributes;
+} field_info;
+
+typedef field_info method_info;
+
+typedef struct {
     const char *name;
     int32_t magic;
     struct {
@@ -66,6 +82,17 @@ typedef struct {
     } version;
     int16_t constant_pool_count;
     struct vector *constant_pool;
+    int16_t accss_flags;
+    int16_t this_class;
+    int16_t super_class;
+    int16_t interfaces_count;
+    int16_t *interfaces;
+    int16_t fields_count;
+    struct vector *fields;
+    int16_t methods_count;
+    struct vector *methods;
+    int16_t attributes_count;
+    struct vector *attributes;
 } class;
 
 loader *loader_create();

@@ -1,5 +1,5 @@
-INCLUDE = -I./include -I/opt/homebrew/include
-LIB = /opt/homebrew/lib
+INCLUDE = -I./include
+LIB = /usr/lib/x86_64-linux-gnu
 SRC = ./src
 BUILD = ./build
 FLAG = -g -c $(INCLUDE)
@@ -19,7 +19,7 @@ all:$(BUILD)/helpers/buffer.o \
 	$(BUILD)/parser.o \
 	$(BUILD)/loader.o \
 	$(BUILD)/javac.o
-	gcc -g $(INCLUDE) -L$(LIB) -lzip main.c $^ -o ./javac
+	gcc -g $(INCLUDE) -L$(LIB) main.c $^ -o ./javac -lzip
 
 clean:
 	rm -rf ./javac

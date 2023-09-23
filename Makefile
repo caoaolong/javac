@@ -18,8 +18,9 @@ all:$(BUILD)/helpers/buffer.o \
 	$(BUILD)/datatype.o \
 	$(BUILD)/parser.o \
 	$(BUILD)/loader.o \
-	$(BUILD)/javac.o
-	gcc -g $(INCLUDE) -L$(LIB) main.c $^ -o ./javac -lzip
+	$(BUILD)/compiler.o
+	gcc -g $(INCLUDE) -L$(LIB) javac.c $^ -o ./javac -lzip
+	gcc -g $(INCLUDE) -L$(LIB) javap.c $^ -o ./javap -lzip
 
 clean:
 	rm -rf ./javac

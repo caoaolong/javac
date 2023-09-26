@@ -3,17 +3,17 @@
 #include <zip.h>
 #include <string.h>
 
-static int32_t parse_read_int32(struct buffer *data)
+int32_t parse_read_int32(struct buffer *data)
 {
     int i = 0;
-    i |= (buffer_read(data) & 0xFF) << 24;;
+    i |= (buffer_read(data) & 0xFF) << 24;
     i |= (buffer_read(data) & 0xFF) << 16;
     i |= (buffer_read(data) & 0xFF) << 8;
     i |= buffer_read(data) & 0xFF;
     return i;
 }
 
-static int16_t parse_read_int16(struct buffer *data)
+int16_t parse_read_int16(struct buffer *data)
 {
     int16_t i = 0;
     i |= (buffer_read(data) & 0xFF) << 8;
@@ -37,12 +37,14 @@ static void parse_class_version(class *cls, struct buffer *data)
     cls->version.major = parse_read_int16(data);
 }
 
+static cp_info CP_INFO_NULL = { 0 };
+
 static void parse_class_constant_pool(class *cls, struct buffer *data)
 {
     cls->constant_pool_count = parse_read_int16(data);
     cls->constant_pool = vector_create(sizeof(cp_info));
     cp_info ci = { 0 };
-    for (int i = 0; i < cls->constant_pool_count - 2; i++) {
+    for (int i = 0; i < cls->constant_pool_count - 1; i++) {
         ci.tag = buffer_read(data);
         switch (ci.tag) {
             case CONSTANT_Class:
@@ -79,6 +81,10 @@ static void parse_class_constant_pool(class *cls, struct buffer *data)
                 break;
         }
         vector_push(cls->constant_pool, &ci);
+        if (ci.tag == CONSTANT_Long || ci.tag == CONSTANT_Double) {
+            vector_push(cls->constant_pool, &CP_INFO_NULL);
+            i++;
+        }
     }
 }
 
@@ -105,9 +111,9 @@ static struct vector *parse_class_attributes(struct buffer *data, int16_t count)
         ai.attribute_name_index = parse_read_int16(data);
         ai.attribute_length = parse_read_int32(data);
         if (ai.attribute_length > 0) {
-            ai.info = malloc(sizeof(int8_t) * ai.attribute_length);
+            ai.info = buffer_create();
             for (int k = 0; k < ai.attribute_length; k ++) {
-                ai.info[k] = buffer_read(data);
+                buffer_write(ai.info, buffer_read(data));
             }
         }
         vector_push(vec, &ai);
@@ -233,6 +239,9 @@ void loader_init(loader *class_loader, const char *classpath)
 
 void loader_append_entry(loader *class_loader, class *cls, const char *name)
 {
+    if (cls == NULL)
+        return;
+    
     struct buffer *buffer = buffer_create();
     for (int i = 0; i < strlen(name) - 6; i++) {
         if (name[i] == '/') {

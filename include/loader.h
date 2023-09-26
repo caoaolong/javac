@@ -60,7 +60,7 @@ typedef struct {
 typedef struct {
     int16_t attribute_name_index;
     int16_t attribute_length;
-    int8_t *info;
+    struct buffer *info;
 } attribute_info;
 
 typedef struct {
@@ -99,5 +99,8 @@ loader *loader_create();
 void loader_init(loader *class_loader, const char *classpath);
 void loader_load(loader *class_loader, const char *prefix);
 void loader_append_entry(loader *class_loader, class *cls, const char *name);
+
+int32_t parse_read_int32(struct buffer *data);
+int16_t parse_read_int16(struct buffer *data);
 
 #endif

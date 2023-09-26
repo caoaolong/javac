@@ -3,3 +3,5 @@ build
 javac
 HelloWorld.class
 javac.dSYM
+javap
+javap.dSYM

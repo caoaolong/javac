@@ -5,7 +5,7 @@
 #include "helpers/vector.h"
 #include <string.h>
 
-#define CLASSPATH       "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar"
+#define CLASSPATH       "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/rt.jar"
 
 #define SEQ(s1, s2)     ((s1) && (s2) && !strcmp((s1), (s2)))
 

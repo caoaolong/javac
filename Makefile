@@ -1,5 +1,5 @@
-INCLUDE = -I./include
-LIB = /usr/lib/x86_64-linux-gnu
+INCLUDE = -I./include -I/opt/homebrew/include
+LIB = /opt/homebrew/lib
 SRC = ./src
 BUILD = ./build
 FLAG = -g -c $(INCLUDE)
@@ -19,9 +19,10 @@ all:$(BUILD)/helpers/buffer.o \
 	$(BUILD)/parser.o \
 	$(BUILD)/loader.o \
 	$(BUILD)/compiler.o
-	gcc -g $(INCLUDE) -L$(LIB) javac.c $^ -o ./javac -lzip
-	gcc -g $(INCLUDE) -L$(LIB) javap.c $^ -o ./javap -lzip
+	gcc -g $(INCLUDE) -lzip -L$(LIB) javac.c $^ -o ./javac
+	gcc -g $(INCLUDE) -lzip -L$(LIB) javap.c $^ -o ./javap
 
 clean:
 	rm -rf ./javac
+	rm -rf ./javap
 	rm -rf $(BUILD)

@@ -1,6 +1,7 @@
 build
 .vscode
 javac
+javap
 HelloWorld.class
 javac.dSYM
 javap

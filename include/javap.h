@@ -63,4 +63,14 @@ typedef struct {
     int16_t attributes_length;
     struct vector *attributes;
 } Code_attribute;
+
+typedef struct {
+    int16_t start_pc;
+    int16_t line_number;
+} line_number_table;
+
+typedef struct {
+    int16_t line_number_table_length;
+    struct vector *line_number_table;
+} LineNumberTable_attribute;
 #endif

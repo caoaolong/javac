@@ -9,7 +9,8 @@ void print_class_version(class *cls);
 void print_constant_pool(class *cls);
 void print_class_methods(class *cls);
 void print_attribute(class *cls, attribute_info *ai);
-void print_code_attribute(struct buffer *info, int16_t size);
+void print_code_attribute(class *cls, struct buffer *info, int16_t size);
+void print_line_number_table_attribute(class *cls, struct buffer *info, int16_t size);
 void print_code(struct buffer *codes, unsigned char code);
 int64_t ci32toi64(int32_t bl, int32_t bh);
 
@@ -18,11 +19,13 @@ int main(int argc, char *argv[])
     loader *class_loader = loader_create();
     loader_init(class_loader, CLASSPATH);
     class *cls = NULL;
-    cls = vector_peek(class_loader->class);
-    print_class_info(cls);
-    print_class_version(cls);
-    print_constant_pool(cls);
-    print_class_methods(cls);
+    do {
+        cls = vector_peek(class_loader->class);
+        print_class_info(cls);
+        print_class_version(cls);
+        print_constant_pool(cls);
+        print_class_methods(cls);
+    } while (cls);
     return 0;
 }
 
@@ -176,11 +179,13 @@ void print_attribute(class *cls, attribute_info *ai)
     char *attr = get_utf8(cls, ai->attribute_name_index);
     printf("    %s:\n", attr);
     if (!strcmp(attr, "Code")) {
-        print_code_attribute(ai->info, ai->attribute_length);
+        print_code_attribute(cls, ai->info, ai->attribute_length);
+    } else if (!strcmp(attr, "LineNumberTable")) {
+        print_line_number_table_attribute(cls, ai->info, ai->attribute_length);
     }
 }
 
-void print_code_attribute(struct buffer *info, int16_t size)
+void print_code_attribute(class *cls, struct buffer *info, int16_t size)
 {
     Code_attribute c_ai;
     c_ai.max_stack = parse_read_int16(info);
@@ -195,11 +200,53 @@ void print_code_attribute(struct buffer *info, int16_t size)
     printf("      stack=%d, locals=%d\n", 
         c_ai.max_stack, c_ai.max_locals);
     while (true) {
-        if (c_ai.code->rindex == c_ai.code->len) {
+        if (c_ai.code->rindex == c_ai.code->len)
             break;
-        }
         printf("        ");
         print_code(c_ai.code, (unsigned char)buffer_read(c_ai.code));
+    }
+    c_ai.exception_table_length = parse_read_int16(info);
+    if (c_ai.exception_table_length > 0) {
+        c_ai.exception_table = vector_create(sizeof(exception_table));
+        exception_table et;
+        for (int i = 0; i < c_ai.exception_table_length; i++) {
+            et.start_pc = parse_read_int16(info);
+            et.end_pc = parse_read_int16(info);
+            et.handler_pc = parse_read_int16(info);
+            et.catch_type = parse_read_int16(info);
+            vector_push(c_ai.exception_table, &et);
+        }
+    }
+    c_ai.attributes_length = parse_read_int16(info);
+    if (c_ai.attributes_length > 0) {
+        attribute_info ai;
+        for (int i = 0; i < c_ai.attributes_length; i++) {
+            ai.attribute_name_index = parse_read_int16(info);
+            ai.attribute_length = parse_read_int32(info);
+            if (ai.attribute_length > 0) {
+                ai.info = buffer_create();
+                for (int k = 0; k < ai.attribute_length; k++) {
+                    buffer_write(ai.info, buffer_read(info));
+                }
+            }
+            print_attribute(cls, &ai);
+        }
+    }
+}
+
+void print_line_number_table_attribute(class *cls, struct buffer *info, int16_t size)
+{
+    LineNumberTable_attribute la;
+    la.line_number_table_length = parse_read_int16(info);
+    if (la.line_number_table_length > 0) {
+        la.line_number_table = vector_create(sizeof(line_number_table));
+        for (int i = 0; i < la.line_number_table_length; i++) {
+            line_number_table lnt;
+            lnt.start_pc = parse_read_int16(info);
+            lnt.line_number = parse_read_int16(info);
+            vector_push(la.line_number_table, &lnt);
+            printf("        line %d: %d\n", lnt.line_number, lnt.start_pc);
+        }
     }
 }
 

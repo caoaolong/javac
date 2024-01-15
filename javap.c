@@ -119,12 +119,12 @@ void print_constant_pool(class *cls)
             case CONSTANT_Integer:break;
             case CONSTANT_Float:break;
             case CONSTANT_Long:
-                printf("#%3d = %-20s%lldl\n", index++, CONSTANT_Long_Name, 
+                printf("#%3d = %-20s%ldl\n", index++, CONSTANT_Long_Name, 
                     ci32toi64(ci->value.bit64.bytes_h, ci->value.bit64.bytes_l));
                 index++;
                 break;
             case CONSTANT_Double:
-                printf("#%3d = %-20s%lld\n", index++, CONSTANT_Double_Name, 
+                printf("#%3d = %-20s%ld\n", index++, CONSTANT_Double_Name, 
                     ci32toi64(ci->value.bit64.bytes_h, ci->value.bit64.bytes_l));
                 index++;
                 break;

@@ -1,8 +1,8 @@
-INCLUDE = -I./include -I/opt/homebrew/include
-LIB = /opt/homebrew/lib
+INCLUDE = -I./include -I/usr/include -I/usr/local/include
+LIB = -L/usr/lib/aarch64-linux-gnu
 SRC = ./src
 BUILD = ./build
-FLAG = -g -c $(INCLUDE)
+FLAG = -g -c $(INCLUDE) -Wno-switch-outside-range
 
 $(BUILD)/%.o: $(SRC)/%.c
 	$(shell mkdir -p $(dir $@))
@@ -19,8 +19,8 @@ all:$(BUILD)/helpers/buffer.o \
 	$(BUILD)/parser.o \
 	$(BUILD)/loader.o \
 	$(BUILD)/compiler.o
-	gcc -g $(INCLUDE) -lzip -L$(LIB) javac.c $^ -o ./javac
-	gcc -g $(INCLUDE) -lzip -L$(LIB) javap.c $^ -o ./javap
+	gcc -g $(INCLUDE) $(LIB) javac.c $^ -o ./javac -lzip
+	gcc -g $(INCLUDE) $(LIB) javap.c $^ -o ./javap -lzip
 
 clean:
 	rm -rf ./javac

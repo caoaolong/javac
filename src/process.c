@@ -7,10 +7,11 @@
 compile_process* compile_process_create(const char *ifile, const char *ofile, int flags)
 {
     FILE *ifp = fopen(ifile, "r");
-    if (!ifp)
+    if (!ifp) 
         return NULL;
     FILE *ofp = fopen(ofile, "w");
-
+    if (!ofp) 
+        return NULL;
     compile_process *process = calloc(1, sizeof(compile_process));
     process->ifile.path = process->pos.filename = ifile;
     process->ifile.ifp = ifp;

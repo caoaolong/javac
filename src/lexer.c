@@ -63,7 +63,7 @@ token *tokens()
         return tk;
     }
     switch (c) {
-        case EOF:
+        case JEOF:
             return NULL;
         CASE_SPACE:
             c = lex_process->next(lex_process);

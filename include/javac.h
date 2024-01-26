@@ -6,9 +6,10 @@
 #include <string.h>
 
 #define CLASSPATH       "/usr/lib/jvm/java-8-openjdk-arm64/jre/lib/rt.jar"
-
+#define VERSION         0x34000000
+#define MAGIC           0xcafebabe
 #define SEQ(s1, s2)     ((s1) && (s2) && !strcmp((s1), (s2)))
-
+#define JEOF            0xFF
 #define CASE_SPACE      \
         case ' ':       \
         case '\t':      \
@@ -56,7 +57,9 @@ enum {
     JAVAC_LEXER_OK,
     JAVAC_LEXER_ERROR,
     JAVAC_PARSE_OK,
-    JAVAC_PARSE_ERROR
+    JAVAC_PARSE_ERROR,
+    JAVAC_FORMAT_OK,
+    JAVAC_FORMAT_ERROR
 };
 
 typedef struct {
@@ -69,5 +72,6 @@ int compile_file(const char *ifile, const char *ofile, int flags);
 
 bool strendswith(const char *str, const char *suffix);
 bool strstartswith(const char *str, const char *prefix);
+int strindextotal(const char *str, const char c);
 
 #endif

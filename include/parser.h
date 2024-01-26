@@ -51,6 +51,7 @@ int parse_new(struct vector *vec);
 int parse_expression(struct vector *expression);
 void parse_function_args(struct vector *args, struct vector *statement);
 int parse(lexer_process *process);
+int format(lexer_process *process);
 
 datatype *datatype_create();
 

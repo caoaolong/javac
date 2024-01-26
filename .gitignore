@@ -6,3 +6,4 @@ HelloWorld.class
 javac.dSYM
 javap
 javap.dSYM
+Test.*

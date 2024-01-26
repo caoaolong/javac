@@ -17,7 +17,9 @@ int compile_file(const char *ifile, const char *ofile, int flags)
     // generate abstract syntax tree
     if (parse(lexer_process) != JAVAC_PARSE_OK)
         return JAVAC_PARSE_ERROR;
-    
+    // generate classfile
+    if (format(lexer_process) != JAVAC_FORMAT_OK)
+        return JAVAC_FORMAT_ERROR;
     return JAVAC_OK;
 }
 
@@ -29,4 +31,14 @@ bool strendswith(const char *str, const char *suffix)
 bool strstartswith(const char *str, const char *prefix)
 {
     return strstr(str, prefix) == str;
+}
+
+int strindextotal(const char *str, const char c)
+{
+    int count = 0;
+    for (int i = 0; i < strlen(str); i++) {
+        if (str[i] == c)
+            count++;
+    }
+    return count;
 }

@@ -18,6 +18,7 @@ all:$(BUILD)/helpers/buffer.o \
 	$(BUILD)/datatype.o \
 	$(BUILD)/parser.o \
 	$(BUILD)/loader.o \
+	$(BUILD)/formatter.o \
 	$(BUILD)/compiler.o
 	gcc -g $(INCLUDE) $(LIB) javac.c $^ -o ./javac -lzip
 	gcc -g $(INCLUDE) $(LIB) javap.c $^ -o ./javap -lzip

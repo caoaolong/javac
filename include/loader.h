@@ -30,7 +30,7 @@ typedef struct {
         struct {
             int16_t index;
         } bit16;
-        // field/method/interafce ref | name and type | invoke dynamic
+        // field/method/interafce method ref | name and type | invoke dynamic
         struct {
             int16_t class_index;
             int16_t index;

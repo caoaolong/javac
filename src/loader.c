@@ -222,7 +222,7 @@ void loader_load(loader *class_loader, const char *prefix)
         if (!strendswith(filename, ".class")) {
             continue;
         }
-        if (strstartswith(filename, prefix)) {
+        if (strstartswith(filename, prefix) && strindextotal(filename, '/') == 2) {
             // 解析类
             loader_append_entry(class_loader, 
                 loader_parse(loader_read(zip, filename)), filename);

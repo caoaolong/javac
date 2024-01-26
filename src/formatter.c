@@ -107,9 +107,25 @@ void write_const_invoke_dynamic(struct buffer *pool, int16_t class_index, int16_
     write_short(pool, index);
 }
 
-void write_const_pool(struct buffer *class)
+void write_const_pool(struct buffer *class, struct vector *tokens)
 {
     struct buffer *const_pool = buffer_create();
+    vector_set_peek_pointer(tokens, 0);
+    token *tk = NULL;
+    while (true) {
+        tk = vector_peek(tokens);
+        if (tk == NULL) break;
+        // 排除import
+        if (tk->type == TOKEN_TYPE_KEYWORD && !strcmp(tk->sval, "import")) {
+            while (true) {
+                tk = vector_peek(tokens);
+                if (tk->type == TOKEN_TYPE_SYMBOL && tk->cval == ';')
+                    break;
+            }
+        } else if (tk->type == TOKEN_TYPE_IDENTIFIER) {
+            printf("%s\n", tk->sval);
+        }
+    }
 }
 
 int format(lexer_process *process)
@@ -121,7 +137,7 @@ int format(lexer_process *process)
     // 写入版本号
     write_int(class, VERSION);
     // 写入常量池
-    write_const_pool(class);
+    write_const_pool(class, process->tokens);
     size_t bytes = fwrite(buffer_ptr(class), 1, class->len, ofp);
     if (bytes == class->len) {
         fclose(ofp);

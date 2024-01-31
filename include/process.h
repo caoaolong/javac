@@ -12,6 +12,7 @@ typedef struct {
 } operator_precedence;
 
 typedef struct node_t node;
+typedef struct datatype_t datatype;
 struct node_t {
     int type;
     position pos;
@@ -68,7 +69,7 @@ struct node_t {
 
 typedef struct scope_t scope;
 struct scope_t {
-    scope *parent;
+    struct scope_t *parent;
     struct vector *symbols;
     struct vector *statements;
     const char *name;

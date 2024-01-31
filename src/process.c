@@ -68,6 +68,7 @@ scope *scope_new(compile_process *process, const char *name) {
 
     scope *s = scope_alloc();
     s->parent = current_scope;
+    s->name = name;
     current_scope = s;
     process->nodes = current_scope->statements;
     node_set_vector(process->nodes);

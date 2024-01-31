@@ -1,5 +1,7 @@
 #include "javac.h"
 #include "lexer.h"
+#include "ast.h"
+#include "parser.h"
 #include "helpers/buffer.h"
 
 void write_short(struct buffer *buffer, int16_t value)
@@ -35,7 +37,25 @@ void write_const_utf8(struct buffer *pool, const char *value)
     write_string(pool, value, len);
 }
 
-void write_const_method(struct buffer *pool, int8_t kind, int16_t index)
+void write_const_class(struct buffer *pool, int16_t index)
+{
+    buffer_write(pool, CONSTANT_Class);
+    write_short(pool, index);
+}
+
+void write_const_string(struct buffer *pool, int16_t index)
+{
+    buffer_write(pool, CONSTANT_String);
+    write_short(pool, index);
+}
+
+void write_const_method_type(struct buffer *pool, int16_t index)
+{
+    buffer_write(pool, CONSTANT_MethodType);
+    write_short(pool, index);
+}
+
+void write_const_method_handle(struct buffer *pool, int8_t kind, int16_t index)
 {
     buffer_write(pool, CONSTANT_MethodHandle);
     buffer_write(pool, kind);
@@ -107,25 +127,50 @@ void write_const_invoke_dynamic(struct buffer *pool, int16_t class_index, int16_
     write_short(pool, index);
 }
 
-void write_const_pool(struct buffer *class, struct vector *tokens)
+void write_const_pool(struct buffer *class, struct scope_t *scope)
 {
     struct buffer *const_pool = buffer_create();
-    vector_set_peek_pointer(tokens, 0);
-    token *tk = NULL;
-    while (true) {
-        tk = vector_peek(tokens);
-        if (tk == NULL) break;
-        // 排除import
-        if (tk->type == TOKEN_TYPE_KEYWORD && !strcmp(tk->sval, "import")) {
-            while (true) {
-                tk = vector_peek(tokens);
-                if (tk->type == TOKEN_TYPE_SYMBOL && tk->cval == ';')
-                    break;
+    // Methodref
+    // TODO: write
+    write_const_method_ref(const_pool, 0, 0);
+    struct node_t *n = vector_peek(scope->statements);
+    if (n->type & NODE_TYPE_STATEMENT_DECLARE) {
+        struct datatype_t *dtype = n->var.type;
+        if (dtype->type == DATA_TYPE_CLASS) {
+            // TODO: write
+            write_const_class(const_pool, 0);
+            // object class
+            write_const_class(const_pool, 0);
+        }
+        // init
+        write_const_utf8(const_pool, "<init>");
+        write_const_utf8(const_pool, "()V");
+        // attribute
+        write_const_utf8(const_pool, "Code");
+        write_const_utf8(const_pool, "LineNumberTable");
+        struct vector *func = n->var.body->statements;
+        vector_set_peek_pointer(func, 0);
+        struct node_t *nf = vector_peek(func);
+        while (nf) {
+            if (nf->type & NODE_TYPE_STATEMENT_DECLARE && nf->type & NODE_TYPE_STATEMENT_FUNCTION) {
+                // function
+                write_const_utf8(const_pool, nf->var.name);
+                // arguments
+                // TODO: write
             }
-        } else if (tk->type == TOKEN_TYPE_IDENTIFIER) {
-            printf("%s\n", tk->sval);
         }
     }
+    write_const_utf8(const_pool, "SourceFile");
+    // TODO: write
+    // filename
+    write_const_utf8(const_pool, "");
+    // TODO: write
+    write_const_name_and_type(const_pool, 0, 0);
+    // TODO: write
+    // class
+    write_const_utf8(const_pool, "");
+    // object
+    write_const_utf8(const_pool, "java/lang/Object");
 }
 
 int format(lexer_process *process)
@@ -137,7 +182,7 @@ int format(lexer_process *process)
     // 写入版本号
     write_int(class, VERSION);
     // 写入常量池
-    write_const_pool(class, process->tokens);
+    write_const_pool(class, process->compiler->root_scope);
     size_t bytes = fwrite(buffer_ptr(class), 1, class->len, ofp);
     if (bytes == class->len) {
         fclose(ofp);
